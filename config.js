@@ -3,8 +3,8 @@ window.RISKO_CONFIG = {
     // API Configuration
     API_BASE_URL: 'http://localhost:8001', // Backend API URL
     
-    // Demo Mode - set to false to use real backend
-    DEMO_MODE: false, // Using real backend now
+    // Demo Mode - set to true for GitHub Pages deployment
+    DEMO_MODE: true, // Using demo mode for GitHub Pages
     DEMO_BANNER: false,
     
     // Analytics

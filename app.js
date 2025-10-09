@@ -2421,7 +2421,6 @@ class APIClient {
         // Gerçek veriler alınamazsa statik analiz
         return this.getStaticAFADData(location);
     }
-    }
 
     calculateDemographicRisk(demographic) {
         // Nüfus yoğunluğu ve sosyo-ekonomik faktörler
