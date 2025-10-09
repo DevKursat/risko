@@ -11,10 +11,10 @@ class RiskoPlatformApp {
         this.charts = {};
         this.map = null;
         this.user = {
-            name: 'Demo Kullanıcı',
-            email: 'demo@risko.com',
-            plan: 'premium',
-            avatar: 'https://ui-avatars.com/api/?name=Demo+User&background=4f46e5&color=fff'
+            name: 'Kürşat',
+            email: 'kursat@risko.com',
+            plan: 'owner',
+            avatar: 'https://ui-avatars.com/api/?name=Kursat&background=4f46e5&color=fff'
         };
         
         this.init();

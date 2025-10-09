@@ -74,16 +74,16 @@ window.RISKO_CONFIG = {
         // GitHub Pages deployment
         window.RISKO_CONFIG.DEMO_MODE = true;
         window.RISKO_CONFIG.ENVIRONMENT = 'github-pages';
-        console.log('🚀 Risko Platform running on GitHub Pages');
+        console.log('🚀 Kürşat\'ın Risko Platform\'u GitHub Pages\'te çalışıyor');
     } else if (hostname === 'localhost' || hostname === '127.0.0.1') {
         // Local development
         window.RISKO_CONFIG.FEATURES.DEBUG_MODE = true;
         window.RISKO_CONFIG.ENVIRONMENT = 'development';
-        console.log('🛠️ Risko Platform running in development mode');
+        console.log('🛠️ Kürşat\'ın Risko Platform\'u geliştirme modunda');
     } else {
         // Production deployment
         window.RISKO_CONFIG.DEMO_MODE = false; // Set to true if API is not ready
         window.RISKO_CONFIG.ENVIRONMENT = 'production';
-        console.log('🌟 Risko Platform running in production mode');
+        console.log('🌟 Kürşat\'ın Risko Platform\'u production modunda');
     }
 })();

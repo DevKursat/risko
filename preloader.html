@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Risko Platform Yükleniyor...</title>
+    
+    <!-- Preload critical resources -->
+    <link rel="preload" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" as="style">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" as="style">
+    <link rel="preload" href="./app.css" as="style">
+    
+    <style>
+        .preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: white;
+            z-index: 10001;
+        }
+        
+        .preloader h2 {
+            margin-bottom: 1rem;
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .preloader p {
+            margin-bottom: 2rem;
+            opacity: 0.8;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .fade-out {
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div id="preloader" class="preloader">
+        <h2>Risko Platform</h2>
+        <p>Kürşat tarafından geliştirildi</p>
+        <div class="spinner"></div>
+        <p style="margin-top: 1rem; font-size: 0.9rem;">Platform başlatılıyor...</p>
+    </div>
+
+    <script>
+        console.log('⚡ Preloader başlatıldı');
+        
+        // Redirect to main app after a short delay
+        setTimeout(() => {
+            document.getElementById('preloader').classList.add('fade-out');
+            setTimeout(() => {
+                window.location.href = './index.html';
+            }, 500);
+        }, 2000);
+        
+        // Preload critical scripts
+        const scripts = [
+            'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js',
+            'https://cdn.jsdelivr.net/npm/chart.js',
+            './app.js'
+        ];
+        
+        scripts.forEach(src => {
+            const link = document.createElement('link');
+            link.rel = 'preload';
+            link.href = src;
+            link.as = 'script';
+            document.head.appendChild(link);
+        });
+    </script>
+</body>
+</html>
