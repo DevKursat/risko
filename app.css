@@ -84,7 +84,7 @@ body {
 }
 
 .loading-logo {
-    animation: pulse 2s infinite;
+    animation: pulse 3s ease-in-out infinite;
 }
 
 .loading-spinner {
@@ -527,9 +527,11 @@ canvas {
 @keyframes pulse {
     0%, 100% {
         opacity: 1;
+        transform: scale(1);
     }
     50% {
-        opacity: 0.5;
+        opacity: 0.8;
+        transform: scale(1.02);
     }
 }
 
@@ -823,5 +825,437 @@ canvas {
     .api-section pre {
         font-size: 10px;
         padding: 0.5rem;
+    }
+}
+
+/* Theme System */
+.theme-light {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --bg-card: #ffffff;
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --border-color: #e2e8f0;
+}
+
+.theme-dark {
+    --bg-primary: #0f172a;
+    --bg-secondary: #1e293b;
+    --bg-card: #1e293b;
+    --text-primary: #f1f5f9;
+    --text-secondary: #e2e8f0;
+    --text-muted: #94a3b8;
+    --border-color: #334155;
+}
+
+/* Dark theme overrides */
+.theme-dark .navbar {
+    background-color: var(--bg-card) !important;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.theme-dark .card {
+    background-color: var(--bg-card);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.theme-dark .bg-light {
+    background-color: var(--bg-card) !important;
+    color: var(--text-primary);
+}
+
+.theme-dark .text-dark {
+    color: var(--text-primary) !important;
+}
+
+.theme-dark .text-muted {
+    color: var(--text-muted) !important;
+}
+
+.theme-dark .border {
+    border-color: var(--border-color) !important;
+}
+
+.theme-dark .dropdown-menu {
+    background-color: var(--bg-card);
+    border-color: var(--border-color);
+}
+
+.theme-dark .dropdown-item {
+    color: var(--text-primary);
+}
+
+.theme-dark .dropdown-item:hover {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.theme-dark .form-control,
+.theme-dark .form-select {
+    background-color: var(--bg-card);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.theme-dark .form-control:focus,
+.theme-dark .form-select:focus {
+    background-color: var(--bg-card);
+    border-color: var(--primary-color);
+    color: var(--text-primary);
+    box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.25);
+}
+
+.theme-dark .btn-outline-secondary {
+    color: var(--text-secondary);
+    border-color: var(--border-color);
+}
+
+.theme-dark .btn-outline-secondary:hover {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.theme-dark .modal-content {
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+}
+
+.theme-dark .modal-header {
+    border-bottom-color: var(--border-color);
+}
+
+.theme-dark .modal-footer {
+    border-top-color: var(--border-color);
+}
+
+/* Production UI/UX Polish */
+
+/* Enhanced card designs */
+.card {
+    border: none !important;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+    border-radius: 12px;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Enhanced buttons */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #6366f1 100%);
+    box-shadow: 0 4px 14px 0 rgba(79, 70, 229, 0.3);
+}
+
+.btn-primary:hover {
+    box-shadow: 0 6px 20px 0 rgba(79, 70, 229, 0.4);
+}
+
+/* Enhanced form controls */
+.form-control, .form-select {
+    border-radius: 8px;
+    border: 2px solid var(--border-color);
+    transition: all 0.2s ease;
+    background-color: var(--bg-card);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.15);
+    transform: translateY(-1px);
+}
+
+/* Enhanced navigation */
+.navbar {
+    backdrop-filter: blur(10px);
+    background-color: rgba(255, 255, 255, 0.95) !important;
+    border-bottom: 1px solid var(--border-color);
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, var(--primary-color) 0%, #6366f1 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.nav-link {
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border-radius: 6px;
+    margin: 0 2px;
+}
+
+.nav-link:hover {
+    background-color: rgba(79, 70, 229, 0.1);
+    transform: translateY(-1px);
+}
+
+.nav-link.active {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #6366f1 100%);
+    color: white !important;
+}
+
+/* Enhanced badges and indicators */
+.badge {
+    border-radius: 6px;
+    font-weight: 500;
+    letter-spacing: 0.025em;
+}
+
+/* Enhanced progress bars */
+.progress {
+    border-radius: 8px;
+    height: 8px;
+    background-color: var(--bg-secondary);
+    overflow: hidden;
+}
+
+.progress-bar {
+    border-radius: 8px;
+    transition: width 0.6s ease;
+}
+
+/* Enhanced risk cards */
+.risk-card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.risk-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 25px -5px rgba(0, 0, 0, 0.12);
+}
+
+.risk-icon {
+    transition: all 0.3s ease;
+}
+
+.risk-card:hover .risk-icon {
+    transform: scale(1.1);
+}
+
+/* Enhanced regional cards */
+.regional-card {
+    border-left: 4px solid var(--primary-color);
+    transition: all 0.3s ease;
+}
+
+.regional-card:hover {
+    border-left-color: var(--accent-color);
+    transform: translateX(4px);
+}
+
+/* Enhanced animations */
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Staggered animations for dashboard cards */
+.dashboard-card:nth-child(1) { animation: slideInUp 0.6s ease 0.1s both; }
+.dashboard-card:nth-child(2) { animation: slideInUp 0.6s ease 0.2s both; }
+.dashboard-card:nth-child(3) { animation: slideInUp 0.6s ease 0.3s both; }
+.dashboard-card:nth-child(4) { animation: slideInUp 0.6s ease 0.4s both; }
+
+/* Enhanced map styling */
+#risk-map {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Enhanced table styling */
+.table {
+    border-radius: 12px;
+    overflow: hidden;
+    background-color: var(--bg-card);
+}
+
+.table thead th {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #6366f1 100%);
+    color: white;
+    border: none;
+    font-weight: 600;
+    letter-spacing: 0.025em;
+}
+
+/* Enhanced dropdown styling */
+.dropdown-menu {
+    border: none;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    border-radius: 12px;
+    padding: 8px;
+}
+
+.dropdown-item {
+    border-radius: 8px;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.dropdown-item:hover {
+    transform: translateX(4px);
+    background: linear-gradient(135deg, var(--primary-color) 0%, #6366f1 100%);
+    color: white;
+}
+
+/* Enhanced loading states */
+.spinner-border {
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Enhanced notification styling */
+.alert {
+    border: none;
+    border-radius: 12px;
+    font-weight: 500;
+    border-left: 4px solid;
+}
+
+.alert-success { border-left-color: var(--success-color); }
+.alert-warning { border-left-color: var(--warning-color); }
+.alert-danger { border-left-color: var(--danger-color); }
+.alert-info { border-left-color: var(--info-color); }
+
+/* Enhanced responsive design */
+@media (max-width: 1200px) {
+    .container-fluid { padding: 0 20px; }
+}
+
+@media (max-width: 992px) {
+    .navbar-brand { font-size: 1.3rem; }
+    .card { margin-bottom: 1rem; }
+    h1 { font-size: 1.8rem; }
+    h2 { font-size: 1.5rem; }
+}
+
+@media (max-width: 768px) {
+    .navbar { padding: 8px 16px; }
+    .container-fluid { padding: 0 16px; }
+    .btn { padding: 8px 16px; font-size: 0.9rem; }
+    .card-body { padding: 1rem; }
+    
+    /* Stack regional cards on mobile */
+    .regional-card { margin-bottom: 1rem; }
+    
+    /* Smaller risk icons on mobile */
+    .risk-icon { width: 50px !important; height: 50px !important; }
+    
+    /* Optimize map on mobile */
+    #risk-map { height: 300px; }
+}
+
+@media (max-width: 576px) {
+    .container-fluid { padding: 0 12px; }
+    .navbar-brand { font-size: 1.2rem; }
+    .btn { padding: 6px 12px; font-size: 0.85rem; }
+    .card-body { padding: 0.75rem; }
+    h1 { font-size: 1.6rem; }
+    h2 { font-size: 1.3rem; }
+    h3 { font-size: 1.1rem; }
+    
+    /* Single column layout on very small screens */
+    .row > .col-lg-3, .row > .col-md-6 {
+        margin-bottom: 0.75rem;
+    }
+}
+
+/* Enhanced dark mode polish */
+.theme-dark .navbar {
+    background-color: rgba(30, 41, 59, 0.95) !important;
+    backdrop-filter: blur(10px);
+}
+
+.theme-dark .navbar-brand {
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.theme-dark .card {
+    background-color: var(--bg-card);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
+.theme-dark .card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+}
+
+/* Performance optimizations */
+* {
+    will-change: auto;
+}
+
+.card, .btn, .nav-link {
+    will-change: transform;
+}
+
+/* Accessibility improvements */
+.btn:focus, .form-control:focus, .form-select:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
     }
 }
