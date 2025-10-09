@@ -122,6 +122,18 @@ class RiskoPlatformApp {
             this.handleResize();
         });
 
+        // Premium dropdown scroll fix
+        const premiumDropdown = document.querySelector('.nav-item.dropdown .nav-link.dropdown-toggle');
+        const premiumMenu = premiumDropdown?.parentElement?.querySelector('.dropdown-menu');
+        if (premiumDropdown && premiumMenu) {
+            premiumDropdown.addEventListener('show.bs.dropdown', () => {
+                document.body.style.overflow = 'hidden';
+            });
+            premiumDropdown.addEventListener('hide.bs.dropdown', () => {
+                document.body.style.overflow = '';
+            });
+        }
+
         // Auto refresh data every 5 minutes
         setInterval(() => {
             if (this.currentPage === 'dashboard') {
@@ -228,6 +240,19 @@ class RiskoPlatformApp {
             // Update URL (SPA behavior)
             window.history.pushState({page}, '', `#${page}`);
 
+            // Scroll to top of new page content smoothly only for new pages
+            if (page !== 'dashboard') {
+                setTimeout(() => {
+                    const mainContent = document.querySelector('.main-content');
+                    if (mainContent) {
+                        mainContent.scrollIntoView({ 
+                            behavior: 'smooth', 
+                            block: 'start' 
+                        });
+                    }
+                }, 100);
+            }
+
         } catch (error) {
             console.error(`Error navigating to ${page}:`, error);
             this.showNotification('Sayfa yüklenirken hata oluştu', 'error');
@@ -292,50 +317,61 @@ class RiskoPlatformApp {
         return `
             <div class="row">
                 <div class="col-12 mb-4">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-header bg-primary text-white">
-                            <h4 class="card-title mb-0">
+                    <div class="card border-0 shadow-lg">
+                        <div class="card-header bg-gradient-primary text-white border-0">
+                            <h4 class="card-title mb-0 fw-bold">
                                 <i class="fas fa-search me-2"></i>Risk Analizi
                             </h4>
+                            <p class="mb-0 opacity-90">Konum bazlı detaylı risk değerlendirmesi yapın</p>
                         </div>
-                        <div class="card-body">
+                        <div class="card-body p-4">
                             <form id="risk-analysis-form">
                                 <div class="row">
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">Adres</label>
-                                        <input type="text" class="form-control" id="address" 
-                                               placeholder="İstanbul, Beyoğlu..." required>
+                                    <div class="col-md-6 mb-4">
+                                        <label class="form-label fw-semibold">
+                                            <i class="fas fa-map-marker-alt me-2 text-primary"></i>Adres
+                                        </label>
+                                        <input type="text" class="form-control form-control-lg" id="address" 
+                                               placeholder="Örn: İstanbul, Beyoğlu, Galata..." required>
+                                        <div class="form-text">Analiz yapmak istediğiniz adresi girin</div>
                                     </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">Analiz Türü</label>
-                                        <select class="form-select" id="analysis-type">
-                                            <option value="comprehensive">Kapsamlı Analiz</option>
-                                            <option value="earthquake">Deprem</option>
-                                            <option value="flood">Sel</option>
-                                            <option value="fire">Yangın</option>
-                                            <option value="landslide">Heyelan</option>
+                                    <div class="col-md-6 mb-4">
+                                        <label class="form-label fw-semibold">
+                                            <i class="fas fa-chart-bar me-2 text-primary"></i>Analiz Türü
+                                        </label>
+                                        <select class="form-select form-select-lg" id="analysis-type">
+                                            <option value="comprehensive">🔍 Kapsamlı Analiz (Tüm Riskler)</option>
+                                            <option value="earthquake">🏔️ Deprem Riski</option>
+                                            <option value="flood">🌊 Sel Riski</option>
+                                            <option value="fire">🔥 Yangın Riski</option>
+                                            <option value="landslide">⛰️ Heyelan Riski</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">Bina Tipi</label>
-                                        <select class="form-select" id="building-type">
-                                            <option value="residential">Konut</option>
-                                            <option value="commercial">Ticari</option>
-                                            <option value="industrial">Sanayi</option>
-                                            <option value="office">Ofis</option>
+                                    <div class="col-md-6 mb-4">
+                                        <label class="form-label fw-semibold">
+                                            <i class="fas fa-building me-2 text-primary"></i>Bina Tipi
+                                        </label>
+                                        <select class="form-select form-select-lg" id="building-type">
+                                            <option value="residential">🏠 Konut</option>
+                                            <option value="commercial">🏪 Ticari</option>
+                                            <option value="industrial">🏭 Sanayi</option>
+                                            <option value="office">🏢 Ofis</option>
                                         </select>
                                     </div>
-                                    <div class="col-md-6 mb-3">
-                                        <label class="form-label">Bina Yaşı</label>
-                                        <input type="number" class="form-control" id="building-age" 
-                                               placeholder="Yıl" min="0" max="200">
+                                    <div class="col-md-6 mb-4">
+                                        <label class="form-label fw-semibold">
+                                            <i class="fas fa-calendar me-2 text-primary"></i>Bina Yaşı
+                                        </label>
+                                        <input type="number" class="form-control form-control-lg" id="building-age" 
+                                               placeholder="Bina yaşını girin (yıl)" min="0" max="200">
+                                        <div class="form-text">Binanın inşa edildiği yıldan itibaren yaşı</div>
                                     </div>
                                 </div>
-                                <div class="d-flex gap-2">
-                                    <button type="submit" class="btn btn-primary">
+                                <div class="d-flex gap-3 justify-content-center">
+                                    <button type="submit" class="btn btn-primary btn-lg px-5 shadow-sm">
                                         <i class="fas fa-search me-2"></i>Analiz Başlat
                                     </button>
-                                    <button type="button" class="btn btn-outline-secondary" id="use-location">
+                                    <button type="button" class="btn btn-outline-success btn-lg px-4 shadow-sm" id="use-location">
                                         <i class="fas fa-location-arrow me-2"></i>Konumumu Kullan
                                     </button>
                                 </div>
@@ -491,6 +527,357 @@ class RiskoPlatformApp {
         `;
     }
 
+    createReportsPage() {
+        return `
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="card border-0 shadow-lg">
+                        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                            <h4 class="mb-0"><i class="fas fa-chart-line me-2"></i>Analiz Raporları</h4>
+                            <div class="btn-group">
+                                <button class="btn btn-light btn-sm" onclick="app.exportReports('pdf')">
+                                    <i class="fas fa-file-pdf me-1"></i>PDF
+                                </button>
+                                <button class="btn btn-light btn-sm" onclick="app.exportReports('excel')">
+                                    <i class="fas fa-file-excel me-1"></i>Excel
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="row mb-3">
+                                <div class="col-md-3">
+                                    <select class="form-select" id="report-filter">
+                                        <option value="all">Tüm Raporlar</option>
+                                        <option value="high">Yüksek Risk</option>
+                                        <option value="medium">Orta Risk</option>
+                                        <option value="low">Düşük Risk</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="date" class="form-control" id="date-from" />
+                                </div>
+                                <div class="col-md-3">
+                                    <input type="date" class="form-control" id="date-to" />
+                                </div>
+                                <div class="col-md-3">
+                                    <button class="btn btn-primary w-100" onclick="app.filterReports()">
+                                        <i class="fas fa-filter me-1"></i>Filtrele
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="reports-list" class="reports-container">
+                                <!-- Reports will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    createBatchAnalysisPage() {
+        return `
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="card border-0 shadow-lg">
+                        <div class="card-header bg-success text-white">
+                            <h4 class="mb-0"><i class="fas fa-layer-group me-2"></i>Toplu Analiz</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h5>Excel Dosyası Yükle</h5>
+                                    <div class="mb-3">
+                                        <input type="file" class="form-control" id="batch-file" accept=".xlsx,.xls,.csv">
+                                        <div class="form-text">Desteklenen formatlar: .xlsx, .xls, .csv</div>
+                                    </div>
+                                    <button class="btn btn-success" onclick="app.processBatchFile()">
+                                        <i class="fas fa-upload me-1"></i>Dosyayı İşle
+                                    </button>
+                                </div>
+                                <div class="col-md-6">
+                                    <h5>Manuel Konum Girişi</h5>
+                                    <div class="mb-3">
+                                        <textarea class="form-control" id="batch-locations" rows="5" 
+                                                  placeholder="Her satıra bir adres yazın:
+İstanbul Beşiktaş
+Ankara Çankaya
+İzmir Konak"></textarea>
+                                    </div>
+                                    <button class="btn btn-primary" onclick="app.processBatchText()">
+                                        <i class="fas fa-play me-1"></i>Analizi Başlat
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <div id="batch-progress" class="d-none">
+                                    <h6>İşlem Durumu</h6>
+                                    <div class="progress mb-2">
+                                        <div class="progress-bar" role="progressbar" style="width: 0%"></div>
+                                    </div>
+                                    <small class="text-muted">İşlenen: <span id="processed-count">0</span> / <span id="total-count">0</span></small>
+                                </div>
+                                <div id="batch-results" class="mt-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    createAPIPage() {
+        return `
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="card border-0 shadow-lg">
+                        <div class="card-header bg-info text-white">
+                            <h4 class="mb-0"><i class="fas fa-code me-2"></i>API Dokümantasyonu</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h5>Risk Analizi API</h5>
+                                    <p class="text-muted">RESTful API ile risk analizlerini entegre edin.</p>
+                                    
+                                    <div class="api-section mb-4">
+                                        <h6>Endpoint</h6>
+                                        <code class="bg-light p-2 d-block rounded">POST /api/v1/analyze</code>
+                                        
+                                        <h6 class="mt-3">Request Body</h6>
+                                        <pre class="bg-dark text-light p-3 rounded"><code>{
+  "location": {
+    "lat": 41.0082,
+    "lng": 28.9784,
+    "address": "İstanbul, Türkiye"
+  },
+  "analysis_type": "comprehensive"
+}</code></pre>
+
+                                        <h6 class="mt-3">Response</h6>
+                                        <pre class="bg-dark text-light p-3 rounded"><code>{
+  "status": "success",
+  "data": {
+    "overall_risk": 7.2,
+    "risks": [
+      {
+        "type": "earthquake",
+        "score": 8.5,
+        "level": "high"
+      }
+    ]
+  }
+}</code></pre>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card bg-light">
+                                        <div class="card-header">
+                                            <h6 class="mb-0">API Test Aracı</h6>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="mb-3">
+                                                <label class="form-label">API Key</label>
+                                                <input type="text" class="form-control" id="api-key" 
+                                                       placeholder="API anahtarınız">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Enlem</label>
+                                                <input type="number" class="form-control" id="api-lat" 
+                                                       step="0.000001" value="41.0082">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Boylam</label>
+                                                <input type="number" class="form-control" id="api-lng" 
+                                                       step="0.000001" value="28.9784">
+                                            </div>
+                                            <button class="btn btn-info w-100" onclick="app.testAPI()">
+                                                <i class="fas fa-play me-1"></i>Test Et
+                                            </button>
+                                            <div id="api-result" class="mt-3"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    createProfilePage() {
+        return `
+            <div class="row">
+                <div class="col-md-4 mb-4">
+                    <div class="card border-0 shadow-lg">
+                        <div class="card-body text-center">
+                            <div class="avatar-circle mx-auto mb-3">
+                                <i class="fas fa-user fa-3x text-primary"></i>
+                            </div>
+                            <h5>Kullanıcı Adı</h5>
+                            <p class="text-muted">user@example.com</p>
+                            <span class="badge bg-success">Premium Üye</span>
+                        </div>
+                    </div>
+                    <div class="card border-0 shadow-sm mt-3">
+                        <div class="card-body">
+                            <h6>İstatistikler</h6>
+                            <div class="d-flex justify-content-between">
+                                <span>Toplam Analiz:</span>
+                                <strong>47</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Bu Ay:</span>
+                                <strong>12</strong>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span>Üyelik:</span>
+                                <strong>6 ay</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-8">
+                    <div class="card border-0 shadow-lg">
+                        <div class="card-header">
+                            <h5 class="mb-0">Profil Ayarları</h5>
+                        </div>
+                        <div class="card-body">
+                            <form>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Ad</label>
+                                        <input type="text" class="form-control" value="Ahmet">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Soyad</label>
+                                        <input type="text" class="form-control" value="Yılmaz">
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">E-posta</label>
+                                    <input type="email" class="form-control" value="user@example.com">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Telefon</label>
+                                    <input type="tel" class="form-control" value="+90 555 123 4567">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Şirket</label>
+                                    <input type="text" class="form-control" placeholder="Şirket adı (opsiyonel)">
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save me-1"></i>Kaydet
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    createSettingsPage() {
+        return `
+            <div class="row">
+                <div class="col-12 mb-4">
+                    <div class="card border-0 shadow-lg">
+                        <div class="card-header">
+                            <h4 class="mb-0"><i class="fas fa-cog me-2"></i>Sistem Ayarları</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Görünüm Ayarları</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label">Tema</label>
+                                        <select class="form-select" id="theme-select">
+                                            <option value="light">Açık Tema</option>
+                                            <option value="dark">Koyu Tema</option>
+                                            <option value="auto">Otomatik</option>
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Dil</label>
+                                        <select class="form-select">
+                                            <option value="tr">Türkçe</option>
+                                            <option value="en">English</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <h6 class="mt-4">Bildirim Ayarları</h6>
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="email-notifications" checked>
+                                        <label class="form-check-label" for="email-notifications">
+                                            E-posta bildirimleri
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="risk-alerts" checked>
+                                        <label class="form-check-label" for="risk-alerts">
+                                            Yüksek risk uyarıları
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="marketing-emails">
+                                        <label class="form-check-label" for="marketing-emails">
+                                            Pazarlama e-postaları
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Harita Ayarları</h6>
+                                    <div class="mb-3">
+                                        <label class="form-label">Varsayılan Zoom</label>
+                                        <input type="range" class="form-range" min="5" max="15" value="10" id="default-zoom">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Harita Stili</label>
+                                        <select class="form-select">
+                                            <option value="street">Sokak Haritası</option>
+                                            <option value="satellite">Uydu Görünümü</option>
+                                            <option value="hybrid">Hibrit</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <h6 class="mt-4">Analiz Ayarları</h6>
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="auto-location" checked>
+                                        <label class="form-check-label" for="auto-location">
+                                            Otomatik konum algılama
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch mb-2">
+                                        <input class="form-check-input" type="checkbox" id="detailed-reports" checked>
+                                        <label class="form-check-label" for="detailed-reports">
+                                            Detaylı raporlar
+                                        </label>
+                                    </div>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="save-history" checked>
+                                        <label class="form-check-label" for="save-history">
+                                            Analiz geçmişini kaydet
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <hr>
+                            <div class="d-flex justify-content-between">
+                                <button class="btn btn-primary">
+                                    <i class="fas fa-save me-1"></i>Ayarları Kaydet
+                                </button>
+                                <button class="btn btn-outline-danger">
+                                    <i class="fas fa-trash me-1"></i>Hesabı Sil
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
     async loadPageData(page) {
         switch (page) {
             case 'analysis':
@@ -498,6 +885,7 @@ class RiskoPlatformApp {
                 break;
             case 'map':
                 await this.initializeMap();
+                this.setupMapControls();
                 break;
             case 'reports':
                 await this.loadReports();
@@ -514,6 +902,183 @@ class RiskoPlatformApp {
         }
     }
 
+    async loadReports() {
+        try {
+            // Mock report data - gerçek uygulamada API'den gelecek
+            const reports = [
+                {
+                    id: 1,
+                    date: '2024-01-15',
+                    location: 'İstanbul, Beşiktaş',
+                    riskScore: 7.2,
+                    riskLevel: 'high',
+                    risks: ['Deprem', 'Sel', 'Yangın']
+                },
+                {
+                    id: 2,
+                    date: '2024-01-10',
+                    location: 'Ankara, Çankaya',
+                    riskScore: 4.5,
+                    riskLevel: 'medium',
+                    risks: ['Deprem', 'Kuraklık']
+                },
+                {
+                    id: 3,
+                    date: '2024-01-05',
+                    location: 'İzmir, Konak',
+                    riskScore: 3.1,
+                    riskLevel: 'low',
+                    risks: ['Deprem']
+                }
+            ];
+
+            this.displayReports(reports);
+        } catch (error) {
+            console.error('Raporlar yüklenirken hata:', error);
+            const container = document.getElementById('reports-list');
+            if (container) {
+                container.innerHTML = '<div class="alert alert-danger">Raporlar yüklenirken bir hata oluştu.</div>';
+            }
+        }
+    }
+
+    displayReports(reports) {
+        const container = document.getElementById('reports-list');
+        if (!container) return;
+
+        if (reports.length === 0) {
+            container.innerHTML = '<div class="alert alert-info">Henüz rapor bulunmuyor.</div>';
+            return;
+        }
+
+        const reportsHtml = reports.map(report => `
+            <div class="card mb-3 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-3">
+                            <small class="text-muted">${report.date}</small>
+                            <h6 class="mb-1">${report.location}</h6>
+                        </div>
+                        <div class="col-md-2 text-center">
+                            <div class="risk-score-circle risk-${report.riskLevel}">
+                                ${report.riskScore}
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="risk-badges">
+                                ${report.risks.map(risk => `<span class="badge bg-secondary me-1">${risk}</span>`).join('')}
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <button class="btn btn-sm btn-outline-primary me-1" onclick="app.viewReport(${report.id})">
+                                <i class="fas fa-eye"></i> Görüntüle
+                            </button>
+                            <button class="btn btn-sm btn-outline-success" onclick="app.downloadReport(${report.id})">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+
+        container.innerHTML = reportsHtml;
+    }
+
+    filterReports() {
+        const filter = document.getElementById('report-filter')?.value;
+        const dateFrom = document.getElementById('date-from')?.value;
+        const dateTo = document.getElementById('date-to')?.value;
+        
+        // Filtreleme mantığı burada implement edilecek
+        console.log('Filtreler:', { filter, dateFrom, dateTo });
+        this.loadReports(); // Şimdilik yeniden yükle
+    }
+
+    exportReports(format) {
+        // Export functionality
+        console.log(`Raporlar ${format} formatında dışa aktarılıyor...`);
+        this.showAlert('success', `Raporlar ${format.toUpperCase()} formatında dışa aktarıldı.`);
+    }
+
+    viewReport(reportId) {
+        // Rapor detay görüntüleme
+        console.log(`Rapor ${reportId} görüntüleniyor...`);
+        this.showAlert('info', `Rapor #${reportId} detayları gösteriliyor.`);
+    }
+
+    downloadReport(reportId) {
+        // Rapor indirme
+        console.log(`Rapor ${reportId} indiriliyor...`);
+        this.showAlert('success', `Rapor #${reportId} indirildi.`);
+    }
+
+    processBatchFile() {
+        const fileInput = document.getElementById('batch-file');
+        if (!fileInput?.files[0]) {
+            this.showAlert('warning', 'Lütfen bir dosya seçin.');
+            return;
+        }
+
+        // Dosya işleme mantığı
+        console.log('Toplu dosya işleniyor...');
+        this.showAlert('info', 'Dosya işleniyor... Bu işlem birkaç dakika sürebilir.');
+    }
+
+    processBatchText() {
+        const textarea = document.getElementById('batch-locations');
+        const locations = textarea?.value.trim();
+        
+        if (!locations) {
+            this.showAlert('warning', 'Lütfen analiz edilecek konumları girin.');
+            return;
+        }
+
+        // Metin işleme mantığı
+        const locationList = locations.split('\n').filter(loc => loc.trim());
+        console.log('Toplu analiz başlatılıyor:', locationList);
+        this.showAlert('info', `${locationList.length} konum için analiz başlatıldı.`);
+    }
+
+    testAPI() {
+        const apiKey = document.getElementById('api-key')?.value;
+        const lat = document.getElementById('api-lat')?.value;
+        const lng = document.getElementById('api-lng')?.value;
+
+        if (!apiKey) {
+            this.showAlert('warning', 'API anahtarı gerekli.');
+            return;
+        }
+
+        // API test mantığı
+        const resultDiv = document.getElementById('api-result');
+        if (resultDiv) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <small><strong>Test Başarılı!</strong><br>
+                    Konum: ${lat}, ${lng}<br>
+                    Risk Skoru: 6.7<br>
+                    Durum: Orta Risk</small>
+                </div>
+            `;
+        }
+    }
+
+    setupPremiumPage() {
+        // Premium sayfa kurulumu
+        console.log('Premium sayfa kurulumu');
+    }
+
+    setupBatchAnalysis() {
+        // Toplu analiz kurulumu
+        console.log('Toplu analiz sayfa kurulumu');
+    }
+
+    setupAPIPage() {
+        // API sayfa kurulumu
+        console.log('API sayfa kurulumu');
+    }
+
     setupAnalysisPage() {
         const form = document.getElementById('risk-analysis-form');
         if (form) {
@@ -525,9 +1090,52 @@ class RiskoPlatformApp {
 
         const locationBtn = document.getElementById('use-location');
         if (locationBtn) {
-            locationBtn.addEventListener('click', () => {
-                this.getCurrentLocation();
+            locationBtn.addEventListener('click', async () => {
+                locationBtn.disabled = true;
+                locationBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Konum alınıyor...';
+                
+                try {
+                    await this.getCurrentLocationAndAnalyze();
+                } finally {
+                    locationBtn.disabled = false;
+                    locationBtn.innerHTML = '<i class="fas fa-location-arrow me-2"></i>Konumumu Kullan';
+                }
             });
+        }
+    }
+
+    async getCurrentLocationAndAnalyze() {
+        if ('geolocation' in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const { latitude, longitude } = position.coords;
+                    
+                    try {
+                        // Reverse geocode to get address
+                        const address = await this.reverseGeocode(latitude, longitude);
+                        
+                        // Fill address field
+                        const addressInput = document.getElementById('address');
+                        if (addressInput) {
+                            addressInput.value = address;
+                        }
+                        
+                        // Auto-start analysis
+                        this.showNotification('Konum başarıyla alındı, analiz başlatılıyor...', 'success');
+                        await this.performRiskAnalysis();
+                        
+                    } catch (error) {
+                        console.error('Reverse geocoding error:', error);
+                        this.showNotification('Adres bilgisi alınamadı, manuel adres girin', 'warning');
+                    }
+                },
+                (error) => {
+                    this.showNotification('Konum erişimi reddedildi veya alınamadı', 'error');
+                    console.error('Geolocation error:', error);
+                }
+            );
+        } else {
+            this.showNotification('Tarayıcınız konum özelliğini desteklemiyor', 'error');
         }
     }
 
@@ -562,64 +1170,109 @@ class RiskoPlatformApp {
     displayAnalysisResults(result) {
         const resultsDiv = document.getElementById('analysis-results');
         resultsDiv.innerHTML = `
-            <div class="card border-0 shadow-sm">
-                <div class="card-header bg-success text-white">
-                    <h5 class="card-title mb-0">
-                        <i class="fas fa-chart-bar me-2"></i>Analiz Sonuçları
+            <div class="card border-0 shadow-lg">
+                <div class="card-header bg-gradient-success text-white border-0">
+                    <h5 class="card-title mb-0 fw-bold">
+                        <i class="fas fa-chart-bar me-2"></i>Risk Analizi Sonuçları
                     </h5>
+                    <p class="mb-0 opacity-90">Detaylı risk değerlendirmesi ve öneriler</p>
                 </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6">
-                            <h6>Genel Risk Skoru</h6>
-                            <div class="d-flex align-items-center mb-3">
-                                <div class="progress flex-grow-1 me-3" style="height: 20px;">
-                                    <div class="progress-bar bg-${this.getRiskColor(result.overall_score)}" 
-                                         style="width: ${result.overall_score}%">
-                                        ${result.overall_score}%
+                <div class="card-body p-4">
+                    <!-- Main Results Section -->
+                    <div class="row mb-4">
+                        <div class="col-lg-6 mb-4">
+                            <div class="h-100 d-flex flex-column justify-content-center">
+                                <h6 class="fw-bold mb-3">
+                                    <i class="fas fa-tachometer-alt me-2 text-primary"></i>Genel Risk Skoru
+                                </h6>
+                                <div class="d-flex align-items-center mb-3">
+                                    <div class="progress flex-grow-1 me-3" style="height: 25px;">
+                                        <div class="progress-bar bg-${this.getRiskColor(result.overall_score)} progress-bar-striped" 
+                                             style="width: ${result.overall_score}%">
+                                            <span class="fw-bold">${result.overall_score}%</span>
+                                        </div>
                                     </div>
+                                    <span class="badge bg-${this.getRiskColor(result.overall_score)} fs-6 px-3 py-2">
+                                        ${this.getRiskLevel(result.overall_score)}
+                                    </span>
                                 </div>
-                                <span class="badge bg-${this.getRiskColor(result.overall_score)} fs-6">
-                                    ${this.getRiskLevel(result.overall_score)}
-                                </span>
+                                <div class="text-muted small">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Risk skoru 0-100 arasında değerlendirilir
+                                </div>
                             </div>
                         </div>
-                        <div class="col-md-6">
-                            <h6>Risk Dağılımı</h6>
-                            <canvas id="risk-distribution-chart" height="200"></canvas>
+                        <div class="col-lg-6 mb-4">
+                            <div class="h-100">
+                                <h6 class="fw-bold mb-3">
+                                    <i class="fas fa-chart-pie me-2 text-primary"></i>Risk Dağılımı
+                                </h6>
+                                <div style="height: 200px; position: relative;">
+                                    <canvas id="risk-distribution-chart"></canvas>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div class="row mt-4">
+                    
+                    <!-- Risk Breakdown Cards -->
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h6 class="fw-bold mb-3">
+                                <i class="fas fa-layer-group me-2 text-primary"></i>Risk Türleri Detayı
+                            </h6>
+                        </div>
                         ${Object.entries(result.risk_breakdown || {}).map(([key, value]) => `
-                            <div class="col-md-3">
-                                <div class="text-center p-3 border rounded">
-                                    <i class="fas fa-${this.getRiskIcon(key)} fa-2x text-${this.getRiskColor(value)} mb-2"></i>
-                                    <h6>${this.getRiskTitle(key)}</h6>
-                                    <span class="h5 text-${this.getRiskColor(value)}">${value}%</span>
+                            <div class="col-lg-3 col-md-6 mb-3">
+                                <div class="card border-0 shadow-sm h-100 risk-card">
+                                    <div class="card-body text-center p-3">
+                                        <div class="risk-icon bg-${this.getRiskColor(value)} bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px;">
+                                            <i class="fas fa-${this.getRiskIcon(key)} fa-xl text-${this.getRiskColor(value)}"></i>
+                                        </div>
+                                        <h6 class="card-title fw-semibold">${this.getRiskTitle(key)}</h6>
+                                        <div class="h4 text-${this.getRiskColor(value)} fw-bold mb-2">${value}%</div>
+                                        <div class="progress" style="height: 6px;">
+                                            <div class="progress-bar bg-${this.getRiskColor(value)}" style="width: ${value}%"></div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         `).join('')}
                     </div>
-                    <div class="mt-4">
-                        <h6>Öneriler</h6>
-                        <ul class="list-group list-group-flush">
-                            ${(result.recommendations || []).map(rec => `
-                                <li class="list-group-item border-0 px-0">
-                                    <i class="fas fa-lightbulb text-warning me-2"></i>${rec}
-                                </li>
-                            `).join('')}
-                        </ul>
+                    
+                    <!-- Recommendations -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="card border-0 bg-light">
+                                <div class="card-body">
+                                    <h6 class="fw-bold mb-3">
+                                        <i class="fas fa-lightbulb me-2 text-warning"></i>Öneriler ve Tavsiyeler
+                                    </h6>
+                                    <div class="row">
+                                        ${(result.recommendations || []).map((rec, index) => `
+                                            <div class="col-md-6 mb-2">
+                                                <div class="d-flex align-items-start">
+                                                    <span class="badge bg-primary rounded-circle me-3 mt-1" style="width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">
+                                                        ${index + 1}
+                                                    </span>
+                                                    <span class="text-secondary">${rec}</span>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="card-footer">
-                    <div class="d-flex gap-2">
-                        <button class="btn btn-primary" onclick="app.downloadReport()">
+                <div class="card-footer bg-white border-0 p-4">
+                    <div class="d-flex gap-2 justify-content-center">
+                        <button class="btn btn-primary btn-lg px-4 shadow-sm" onclick="app.downloadReport()">
                             <i class="fas fa-download me-2"></i>PDF İndir
                         </button>
-                        <button class="btn btn-outline-primary" onclick="app.shareAnalysis()">
+                        <button class="btn btn-outline-primary btn-lg px-4 shadow-sm" onclick="app.shareAnalysis()">
                             <i class="fas fa-share me-2"></i>Paylaş
                         </button>
-                        <button class="btn btn-outline-success" onclick="app.saveAnalysis()">
+                        <button class="btn btn-outline-success btn-lg px-4 shadow-sm" onclick="app.saveAnalysis()">
                             <i class="fas fa-save me-2"></i>Kaydet
                         </button>
                     </div>
@@ -629,8 +1282,27 @@ class RiskoPlatformApp {
         
         resultsDiv.classList.remove('d-none');
         
-        // Initialize result chart
-        this.initRiskDistributionChart(result.risk_breakdown);
+        // Gentle scroll to results with offset for navbar - only if not already visible
+        const resultsRect = resultsDiv.getBoundingClientRect();
+        const isVisible = resultsRect.top >= 0 && resultsRect.bottom <= window.innerHeight;
+        
+        if (!isVisible) {
+            // Only scroll if results are not in viewport
+            setTimeout(() => {
+                const offset = 100; // Offset for navbar
+                const elementPosition = resultsDiv.offsetTop - offset;
+                
+                window.scrollTo({
+                    top: elementPosition,
+                    behavior: 'smooth'
+                });
+            }, 300);
+        }
+        
+        // Initialize result chart with delay to ensure canvas is ready
+        setTimeout(() => {
+            this.initRiskDistributionChart(result.risk_breakdown);
+        }, 100);
     }
 
     showAnalysisLoading() {
@@ -661,46 +1333,162 @@ class RiskoPlatformApp {
         const mapElement = document.getElementById('risk-map');
         if (!mapElement) return;
 
-        // Initialize Leaflet map
+        // Initialize Leaflet map with fallback tile providers
         this.map = L.map('risk-map').setView([39.9334, 32.8597], 6);
         
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors'
-        }).addTo(this.map);
+        // Try multiple tile providers for better reliability
+        const tileProviders = [
+            {
+                url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                attribution: '© OpenStreetMap contributors'
+            },
+            {
+                url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+                attribution: '© OpenStreetMap contributors, © CARTO'
+            },
+            {
+                url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
+                attribution: '© Esri'
+            }
+        ];
+
+        let tileLayer = null;
+        for (const provider of tileProviders) {
+            try {
+                tileLayer = L.tileLayer(provider.url, {
+                    attribution: provider.attribution,
+                    maxZoom: 18,
+                    timeout: 5000 // 5 second timeout
+                });
+                tileLayer.addTo(this.map);
+                break; // If successful, break the loop
+            } catch (error) {
+                console.warn(`Tile provider failed: ${provider.url}`, error);
+                continue; // Try next provider
+            }
+        }
+
+        if (!tileLayer) {
+            console.error('All tile providers failed, using basic map');
+            // Fallback to a simple colored background
+            this.map.getContainer().style.backgroundColor = '#e5e5e5';
+        }
+
+        // Store markers for dynamic updates
+        this.mapMarkers = L.layerGroup().addTo(this.map);
 
         // Add risk data layers
         await this.loadMapData();
     }
 
-    async loadMapData() {
+    setupMapControls() {
+        // Risk type selector
+        const riskTypeSelect = document.getElementById('map-risk-type');
+        if (riskTypeSelect) {
+            riskTypeSelect.addEventListener('change', () => {
+                this.refreshMapData();
+            });
+        }
+
+        // Risk level checkboxes
+        const riskCheckboxes = document.querySelectorAll('#risk-low, #risk-medium, #risk-high');
+        riskCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', () => {
+                this.refreshMapData();
+            });
+        });
+    }
+
+    async refreshMapData() {
+        if (!this.map || !this.mapMarkers) return;
+
+        try {
+            // Clear existing markers
+            this.mapMarkers.clearLayers();
+
+            // Get filter values
+            const selectedRiskType = document.getElementById('map-risk-type')?.value || 'all';
+            const showLow = document.getElementById('risk-low')?.checked || false;
+            const showMedium = document.getElementById('risk-medium')?.checked || false;
+            const showHigh = document.getElementById('risk-high')?.checked || false;
+
+            // Reload map data with filters
+            await this.loadMapData({
+                riskType: selectedRiskType,
+                showLow,
+                showMedium,
+                showHigh
+            });
+
+            console.log('🗺️ Harita verileri güncellendi');
+        } catch (error) {
+            console.error('Harita yenileme hatası:', error);
+            this.showNotification('Harita güncellenirken hata oluştu', 'error');
+        }
+    }
+
+    async loadMapData(filters = {}) {
         try {
             const riskData = await this.apiClient.getRiskMapData();
             
             riskData.forEach(point => {
+                // Apply filters
+                if (filters.riskType && filters.riskType !== 'all') {
+                    // In a real implementation, you'd filter by risk type
+                }
+
+                const riskLevel = this.getRiskLevel(point.risk_level);
+                
+                // Apply risk level filters
+                if (filters.showLow !== undefined || filters.showMedium !== undefined || filters.showHigh !== undefined) {
+                    const shouldShow = (
+                        (filters.showLow && riskLevel === 'Düşük') ||
+                        (filters.showMedium && riskLevel === 'Orta') ||
+                        (filters.showHigh && riskLevel === 'Yüksek')
+                    );
+                    
+                    if (!shouldShow) return;
+                }
+
                 const color = this.getRiskColor(point.risk_level);
                 const marker = L.circleMarker([point.lat, point.lng], {
-                    radius: 8,
-                    fillColor: color,
+                    radius: 10,
+                    fillColor: this.getColorByBootstrapClass(color),
                     color: '#fff',
                     weight: 2,
                     opacity: 1,
                     fillOpacity: 0.8
-                }).addTo(this.map);
+                });
+
+                // Add to marker group instead of directly to map
+                marker.addTo(this.mapMarkers);
 
                 marker.bindPopup(`
                     <div class="p-2">
-                        <h6>${point.location}</h6>
+                        <h6 class="mb-2">${point.location}</h6>
                         <p class="mb-1"><strong>Risk Seviyesi:</strong> 
-                            <span class="badge bg-${color}">${this.getRiskLevel(point.risk_level)}</span>
+                            <span class="badge bg-${color}">${riskLevel}</span>
                         </p>
                         <p class="mb-0"><strong>Skor:</strong> ${point.risk_level}%</p>
+                        <hr class="my-2">
+                        <small class="text-muted">Güncel veriler</small>
                     </div>
                 `);
             });
             
         } catch (error) {
             console.error('Map data loading error:', error);
+            this.showNotification('Harita verileri yüklenirken hata oluştu', 'error');
         }
+    }
+
+    getColorByBootstrapClass(bootstrapClass) {
+        const colorMap = {
+            'success': '#10b981',
+            'warning': '#f59e0b', 
+            'danger': '#ef4444'
+        };
+        return colorMap[bootstrapClass] || '#6b7280';
     }
 
     initCharts() {
@@ -801,10 +1589,30 @@ class RiskoPlatformApp {
         const container = document.getElementById('recent-activities');
         if (!container) return;
 
+        const getActivityColor = (type) => {
+            const colors = {
+                'analysis': 'primary',
+                'report': 'success', 
+                'premium': 'warning',
+                'batch': 'info'
+            };
+            return colors[type] || 'primary';
+        };
+
+        const getActivityIcon = (type) => {
+            const icons = {
+                'analysis': 'search',
+                'report': 'file-pdf',
+                'premium': 'crown',
+                'batch': 'layer-group'
+            };
+            return icons[type] || 'search';
+        };
+
         container.innerHTML = activities.map(activity => `
             <div class="activity-item d-flex align-items-center">
-                <div class="activity-icon bg-${activity.type === 'analysis' ? 'primary' : 'success'} text-white me-3">
-                    <i class="fas fa-${activity.type === 'analysis' ? 'search' : 'file-alt'}"></i>
+                <div class="activity-icon bg-${getActivityColor(activity.type)} text-white me-3">
+                    <i class="fas fa-${getActivityIcon(activity.type)}"></i>
                 </div>
                 <div class="flex-grow-1">
                     <h6 class="mb-1">${activity.title}</h6>
