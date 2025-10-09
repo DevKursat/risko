@@ -14,7 +14,7 @@ class RiskoPlatformApp {
             name: 'Demo Kullanıcı',
             email: 'demo@risko.com',
             plan: 'premium',
-            avatar: 'https://via.placeholder.com/32x32'
+            avatar: 'https://ui-avatars.com/api/?name=Demo+User&background=4f46e5&color=fff'
         };
         
         this.init();
@@ -615,6 +615,13 @@ class RiskoPlatformApp {
     }
 
     initCharts() {
+        // Wait for Chart.js to load
+        if (typeof Chart === 'undefined') {
+            console.log('⏳ Chart.js yükleniyor, 1 saniye bekleniyor...');
+            setTimeout(() => this.initCharts(), 1000);
+            return;
+        }
+
         const ctx = document.getElementById('risk-chart');
         if (ctx) {
             this.charts.riskChart = new Chart(ctx, {
@@ -650,6 +657,12 @@ class RiskoPlatformApp {
     }
 
     initRiskDistributionChart(data) {
+        // Wait for Chart.js to load
+        if (typeof Chart === 'undefined') {
+            setTimeout(() => this.initRiskDistributionChart(data), 1000);
+            return;
+        }
+
         const ctx = document.getElementById('risk-distribution-chart');
         if (ctx && data) {
             new Chart(ctx, {
@@ -1016,10 +1029,8 @@ class APIClient {
     }
 }
 
-// Initialize app when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    window.app = new RiskoPlatformApp();
-});
+// Initialize app when DOM is loaded - removed automatic initialization
+// App will be initialized by error-safe-init.js
 
 // Handle browser navigation
 window.addEventListener('popstate', (event) => {
