@@ -3,19 +3,19 @@ from typing import Optional, List
 from app.schemas.risk import AddressInput, RiskScoreResponse, DetailedRiskReport
 from app.services.risk_calculator import risk_service
 from app.services.recommendations import recommendation_service
+from app.core.config import settings
 
 router = APIRouter()
 
 
-# Simple API key validation (in production, use proper authentication)
+# API key validation with proper settings integration
 async def verify_api_key(x_api_key: Optional[str] = Header(None)):
     """Verify API key for B2B access."""
     if not x_api_key:
         raise HTTPException(status_code=401, detail="API key required")
     
-    # In production, validate against database
-    # For now, accept any non-empty key for demonstration
-    if len(x_api_key) < 10:
+    # Check against configured API keys
+    if x_api_key not in settings.B2B_API_KEYS:
         raise HTTPException(status_code=401, detail="Invalid API key")
     
     return x_api_key
@@ -30,6 +30,9 @@ async def batch_analyze(
     Batch analysis for multiple addresses (B2B API).
     For insurance companies and banks to analyze multiple properties.
     """
+    if len(addresses) > 100:  # Limit batch size
+        raise HTTPException(status_code=400, detail="Batch size cannot exceed 100 addresses")
+    
     results = []
     
     for address_input in addresses:

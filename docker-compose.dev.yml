@@ -1,0 +1,38 @@
+# Development Docker Compose
+version: '3.8'
+
+services:
+  risko-api:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - DATABASE_URL=sqlite:///./risko.db
+    volumes:
+      - ./backend:/app
+      - ./backend/.env:/app/.env
+    restart: unless-stopped
+
+  postgres:
+    image: postgis/postgis:15-3.3
+    environment:
+      - POSTGRES_DB=risko_dev
+      - POSTGRES_USER=risko_user
+      - POSTGRES_PASSWORD=risko_password
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6380:6379"
+    restart: unless-stopped
+
+volumes:
+  postgres_dev_data:

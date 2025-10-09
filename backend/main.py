@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 from app.core.config import settings
+from app.core.metrics import MetricsMiddleware, set_metrics_middleware, get_metrics_middleware
 from app.api import risk, b2b
 
 # Logging configuration
@@ -22,6 +23,11 @@ app = FastAPI(
     docs_url="/docs" if settings.ENVIRONMENT != "production" else None,
     redoc_url="/redoc" if settings.ENVIRONMENT != "production" else None
 )
+
+# Add metrics middleware first
+metrics_middleware = MetricsMiddleware(app)
+app.add_middleware(MetricsMiddleware)
+set_metrics_middleware(metrics_middleware)
 
 # Security middleware for production
 if hasattr(settings, 'ENVIRONMENT') and settings.ENVIRONMENT == "production":
@@ -68,7 +74,8 @@ async def root():
         "description": "AI-powered regional disaster and crisis risk modeling",
         "version": settings.VERSION,
         "status": "healthy",
-        "docs": "/docs"
+        "docs": "/docs" if settings.ENVIRONMENT != "production" else "disabled",
+        "environment": settings.ENVIRONMENT
     }
 
 @app.get("/health")
@@ -77,18 +84,21 @@ async def health_check():
     return {
         "status": "healthy",
         "version": settings.VERSION,
+        "environment": settings.ENVIRONMENT,
         "timestamp": time.time()
     }
 
 @app.get("/metrics")
 async def metrics():
     """Basic metrics endpoint for monitoring."""
-    return {
-        "requests_total": "metrics_placeholder",
-        "response_time_avg": "metrics_placeholder", 
-        "error_rate": "metrics_placeholder",
-        "version": settings.VERSION
-    }
+    middleware = get_metrics_middleware()
+    if middleware:
+        return middleware.get_metrics()
+    else:
+        return {
+            "error": "Metrics middleware not available",
+            "version": settings.VERSION
+        }
 
 # Global exception handler
 @app.exception_handler(Exception)

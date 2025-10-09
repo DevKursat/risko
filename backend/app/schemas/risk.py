@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional, Dict, List
 from datetime import datetime
 
@@ -8,6 +8,8 @@ class AddressInput(BaseModel):
 
 
 class RiskScoreResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     address: str
     latitude: Optional[float] = None
     longitude: Optional[float] = None
@@ -22,21 +24,17 @@ class RiskScoreResponse(BaseModel):
     
     building_age: Optional[int] = None
     construction_quality: Optional[str] = None
-    
-    class Config:
-        from_attributes = True
 
 
 class RecommendationResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: int
     risk_type: str
     risk_level: str
     title: str
     description: str
     priority: int
-    
-    class Config:
-        from_attributes = True
 
 
 class DetailedRiskReport(BaseModel):

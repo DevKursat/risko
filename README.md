@@ -40,13 +40,30 @@ Risko aggregates multiple data sources and provides:
 - **ML/AI**: TensorFlow, scikit-learn
 - **API Documentation**: OpenAPI/Swagger
 
-## 📦 Installation
+## 📦 Installation & Deployment
 
-### Prerequisites
-- Python 3.8+
-- PostgreSQL with PostGIS extension (optional for production)
+### Quick Start with Docker (Recommended)
 
-### Setup
+1. Clone the repository:
+```bash
+git clone https://github.com/DevKursat/risko.git
+cd risko
+```
+
+2. Run with Docker Compose:
+```bash
+# For development
+./deploy.sh development
+
+# For production
+./deploy.sh production
+```
+
+The API will be available at:
+- Development: `http://localhost:8000`
+- Production: `https://localhost` (with SSL)
+
+### Manual Installation
 
 1. Clone the repository:
 ```bash
@@ -60,10 +77,11 @@ cd backend
 pip install -r requirements.txt
 ```
 
-3. Create a `.env` file (optional):
-```env
-DATABASE_URL=postgresql://user:password@localhost/risko
-REDIS_URL=redis://localhost:6379
+3. Configure environment:
+```bash
+# Copy and edit environment file
+cp .env.example .env
+# Edit .env with your settings
 ```
 
 4. Run the application:
@@ -71,7 +89,43 @@ REDIS_URL=redis://localhost:6379
 uvicorn main:app --reload
 ```
 
-The API will be available at `http://localhost:8000`
+### Production Deployment
+
+For production deployment:
+
+1. **Configure Environment Variables:**
+   - Copy `.env.production` to `.env`
+   - Update database credentials, API keys, and domain settings
+   - Set secure SECRET_KEY and API keys
+
+2. **SSL Certificates:**
+   - Place SSL certificates in `ssl/` directory
+   - Or use Let's Encrypt with Certbot
+
+3. **Deploy:**
+```bash
+./deploy.sh production
+```
+
+4. **Monitor:**
+   - Health check: `https://yourdomain.com/health`
+   - Metrics: `https://yourdomain.com/metrics`
+   - Logs: `docker-compose -f docker-compose.prod.yml logs -f`
+
+## 🔧 Configuration
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `ENVIRONMENT` | Environment (development/production) | development |
+| `LOG_LEVEL` | Logging level | INFO |
+| `SECRET_KEY` | Secret key for security | (required in production) |
+| `DATABASE_URL` | Database connection string | sqlite:///./risko.db |
+| `REDIS_URL` | Redis connection string | None |
+| `B2B_API_KEYS` | List of valid B2B API keys | ["demo-api-key-123"] |
+| `ALLOWED_HOSTS` | Allowed hostnames | ["*"] |
+| `CORS_ORIGINS` | CORS allowed origins | ["*"] |
 
 ## 📚 API Documentation
 

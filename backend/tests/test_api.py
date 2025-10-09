@@ -1,5 +1,11 @@
 import pytest
 from fastapi.testclient import TestClient
+import sys
+import os
+
+# Add the parent directory to the path so we can import main
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from main import app
 
 client = TestClient(app)
@@ -106,7 +112,7 @@ def test_b2b_batch_analysis():
             {"address": "Istanbul, Turkey"},
             {"address": "Ankara, Turkey"}
         ],
-        headers={"X-API-Key": "test-api-key-1234567890"}
+        headers={"X-API-Key": "demo-api-key-123"}
     )
     assert response.status_code == 200
     data = response.json()
@@ -135,7 +141,7 @@ def test_b2b_risk_statistics():
     """Test B2B risk statistics endpoint."""
     response = client.get(
         "/api/v1/b2b/risk-statistics?region=Istanbul",
-        headers={"X-API-Key": "test-api-key-1234567890"}
+        headers={"X-API-Key": "demo-api-key-123"}
     )
     assert response.status_code == 200
     data = response.json()
