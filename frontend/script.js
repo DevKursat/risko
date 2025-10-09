@@ -1,8 +1,46 @@
 // Risko Platform Frontend JavaScript
 class RiskoPlatform {
     constructor() {
-        this.apiBaseUrl = 'http://localhost:8000/api/v1';
+        // API Base URL - configurable for different environments
+        this.apiBaseUrl = this.getApiBaseUrl();
+        this.isLocalhost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        this.demoMode = this.shouldUseDemoMode();
         this.init();
+    }
+
+    shouldUseDemoMode() {
+        // Check config first
+        if (window.RISKO_CONFIG && window.RISKO_CONFIG.DEMO_MODE) {
+            return true;
+        }
+        
+        // Check for GitHub Pages
+        if (window.location.hostname.includes('github.io')) {
+            return true;
+        }
+        
+        // Check localStorage
+        if (localStorage.getItem('risko-demo-mode') === 'true') {
+            return true;
+        }
+        
+        // Default for localhost
+        return this.isLocalhost;
+    }
+
+    getApiBaseUrl() {
+        // Use config if available
+        if (window.RISKO_CONFIG && window.RISKO_CONFIG.API_BASE_URL) {
+            return window.RISKO_CONFIG.API_BASE_URL;
+        }
+        
+        // Check for environment-specific API URL
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            return 'http://localhost:8000/api/v1';
+        }
+        
+        // Default fallback for GitHub Pages
+        return 'https://risko-api.herokuapp.com/api/v1'; // Change this!
     }
 
     init() {
@@ -55,6 +93,13 @@ class RiskoPlatform {
         this.hideResults();
 
         try {
+            // Check if we should use demo mode
+            if (this.demoMode) {
+                console.log('Using demo mode - mock data');
+                await this.handleDemoMode(address, analysisType);
+                return;
+            }
+
             let url, data;
             
             if (analysisType === 'detailed') {
@@ -85,12 +130,38 @@ class RiskoPlatform {
                 this.displayBasicResults(result);
             }
 
+            Analytics.trackEvent('Analysis', 'Complete', analysisType);
+
         } catch (error) {
-            console.error('Error:', error);
+            console.error('API Error:', error);
+            
+            // Fallback to demo mode if API fails
+            if (!this.demoMode) {
+                this.showAlert('API\'ye bağlanılamıyor. Demo modu aktif ediliyor...', 'info');
+                await this.handleDemoMode(address, analysisType);
+                return;
+            }
+            
             this.showAlert('Analiz sırasında bir hata oluştu. Lütfen tekrar deneyin.', 'danger');
         } finally {
             this.showLoading(false);
         }
+    }
+
+    async handleDemoMode(address, analysisType) {
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        let result;
+        if (analysisType === 'detailed') {
+            result = DemoData.getDetailedAnalysis(address);
+            this.displayDetailedResults(result);
+        } else {
+            result = DemoData.getRiskAnalysis(address);
+            this.displayBasicResults(result);
+        }
+
+        Analytics.trackEvent('Analysis', 'Demo', analysisType);
     }
 
     displayBasicResults(data) {
