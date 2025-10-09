@@ -1,11 +1,11 @@
 // Risko Platform Configuration
 window.RISKO_CONFIG = {
     // API Configuration
-    API_BASE_URL: 'https://your-backend-api.herokuapp.com', // Change this for production deployment
+    API_BASE_URL: 'http://localhost:8001', // Backend API URL
     
-    // Demo Mode - set to true for GitHub Pages deployment
-    DEMO_MODE: true, // Set to false when connecting to live API
-    DEMO_BANNER: true,
+    // Demo Mode - set to false to use real backend
+    DEMO_MODE: false, // Using real backend now
+    DEMO_BANNER: false,
     
     // Analytics
     GOOGLE_ANALYTICS_ID: '', // Add your GA4 ID here
