@@ -74,6 +74,9 @@ class RiskoPlatformApp {
     }
 
     async initializeApp() {
+        // Initialize theme first
+        this.initializeTheme();
+        
         // Initialize charts
         this.initCharts();
         
@@ -85,6 +88,9 @@ class RiskoPlatformApp {
         
         // Initialize real-time features
         this.initRealTimeFeatures();
+        
+        // Setup data refresh intervals
+        this.setupDataRefresh();
     }
 
     setupEventListeners() {
@@ -97,6 +103,14 @@ class RiskoPlatformApp {
             }
         });
 
+        // Theme Toggle
+        const themeToggle = document.getElementById('theme-toggle');
+        if (themeToggle) {
+            themeToggle.addEventListener('click', () => {
+                this.toggleTheme();
+            });
+        }
+
         // Logout
         document.getElementById('logout-btn')?.addEventListener('click', (e) => {
             e.preventDefault();
@@ -105,9 +119,84 @@ class RiskoPlatformApp {
 
         // Window resize for charts
         window.addEventListener('resize', () => {
-            Object.values(this.charts).forEach(chart => {
-                if (chart) chart.resize();
-            });
+            this.handleResize();
+        });
+
+        // Auto refresh data every 5 minutes
+        setInterval(() => {
+            if (this.currentPage === 'dashboard') {
+                this.refreshDashboardData();
+            }
+        }, 300000);
+    }
+
+    toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+        const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+        
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('risko-theme', newTheme);
+        
+        // Update chart colors if they exist
+        this.updateChartColors(newTheme);
+        
+        // Smooth transition effect
+        document.body.style.transition = 'background-color 0.3s ease, color 0.3s ease';
+        setTimeout(() => {
+            document.body.style.transition = '';
+        }, 300);
+        
+        console.log(`🎨 Theme changed to: ${newTheme}`);
+    }
+
+    initializeTheme() {
+        // Check saved theme or system preference
+        const savedTheme = localStorage.getItem('risko-theme');
+        const systemPreference = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        const theme = savedTheme || systemPreference;
+        
+        document.documentElement.setAttribute('data-theme', theme);
+        console.log(`🎨 Theme initialized: ${theme}`);
+    }
+
+    handleResize() {
+        // Refresh charts on resize
+        Object.values(this.charts).forEach(chart => {
+            if (chart && typeof chart.resize === 'function') {
+                chart.resize();
+            }
+        });
+        
+        // Refresh map
+        if (this.map) {
+            setTimeout(() => {
+                this.map.invalidateSize();
+            }, 100);
+        }
+    }
+
+    updateChartColors(theme) {
+        // Update chart colors based on theme
+        const isDark = theme === 'dark';
+        const textColor = isDark ? '#f1f5f9' : '#1e293b';
+        const gridColor = isDark ? '#334155' : '#e2e8f0';
+
+        Object.values(this.charts).forEach(chart => {
+            if (chart && chart.options) {
+                if (chart.options.scales) {
+                    Object.values(chart.options.scales).forEach(scale => {
+                        if (scale.ticks) scale.ticks.color = textColor;
+                        if (scale.grid) scale.grid.color = gridColor;
+                    });
+                }
+                if (chart.options.plugins && chart.options.plugins.legend) {
+                    chart.options.plugins.legend.labels = {
+                        ...chart.options.plugins.legend.labels,
+                        color: textColor
+                    };
+                }
+                chart.update('none');
+            }
         });
     }
 
@@ -790,6 +879,28 @@ class RiskoPlatformApp {
         }
     }
 
+    // Clean up intervals when app is destroyed
+    destroy() {
+        if (this.dataRefreshInterval) {
+            clearInterval(this.dataRefreshInterval);
+        }
+        if (this.pageRefreshInterval) {
+            clearInterval(this.pageRefreshInterval);
+        }
+        
+        // Clean up charts
+        Object.values(this.charts).forEach(chart => {
+            if (chart && typeof chart.destroy === 'function') {
+                chart.destroy();
+            }
+        });
+        
+        // Clean up map
+        if (this.map) {
+            this.map.remove();
+        }
+    }
+
     getCurrentLocation() {
         if ('geolocation' in navigator) {
             navigator.geolocation.getCurrentPosition(
@@ -986,6 +1097,10 @@ class APIClient {
         return await this.request('/activities/recent');
     }
 
+    async getDashboardStats() {
+        return await this.request('/dashboard/stats');
+    }
+
     async getRiskMapData() {
         return await this.request('/risk/map-data');
     }
@@ -1003,7 +1118,8 @@ class APIClient {
                 recommendations: [
                     'Bina yapısını güçlendiriniz',
                     'Acil durum planı hazırlayınız',
-                    'Sigorta kapsamınızı gözden geçiriniz'
+                    'Sigorta kapsamınızı gözden geçiriniz',
+                    'Düzenli denetim yaptırınız'
                 ]
             },
             '/activities/recent': [
@@ -1011,20 +1127,46 @@ class APIClient {
                     title: 'İstanbul Beyoğlu Risk Analizi',
                     description: 'Kapsamlı risk analizi tamamlandı',
                     type: 'analysis',
-                    created_at: new Date(Date.now() - 3600000)
+                    created_at: new Date(Date.now() - Math.random() * 86400000)
+                },
+                {
+                    title: 'Ankara Çankaya Raporu',
+                    description: 'PDF rapor oluşturuldu ve indirildi',
+                    type: 'report',
+                    created_at: new Date(Date.now() - Math.random() * 86400000)
+                },
+                {
+                    title: 'İzmir Konak Premium Analizi',
+                    description: 'Detaylı premium analiz tamamlandı',
+                    type: 'premium',
+                    created_at: new Date(Date.now() - Math.random() * 86400000)
+                },
+                {
+                    title: 'Bursa Osmangazi Batch İşlemi',
+                    description: '50 adet toplu analiz başarılı',
+                    type: 'batch',
+                    created_at: new Date(Date.now() - Math.random() * 86400000)
                 }
             ],
+            '/dashboard/stats': {
+                total: 1247 + Math.floor(Math.random() * 100),
+                low: 934 + Math.floor(Math.random() * 50),
+                medium: 231 + Math.floor(Math.random() * 30),
+                high: 82 + Math.floor(Math.random() * 20)
+            },
             '/risk/map-data': [
-                { lat: 41.0082, lng: 28.9784, location: 'İstanbul', risk_level: 75 },
-                { lat: 39.9334, lng: 32.8597, location: 'Ankara', risk_level: 45 },
-                { lat: 38.4192, lng: 27.1287, location: 'İzmir', risk_level: 60 }
+                { lat: 41.0082, lng: 28.9784, location: 'İstanbul', risk_level: Math.floor(Math.random() * 100) },
+                { lat: 39.9334, lng: 32.8597, location: 'Ankara', risk_level: Math.floor(Math.random() * 100) },
+                { lat: 38.4192, lng: 27.1287, location: 'İzmir', risk_level: Math.floor(Math.random() * 100) },
+                { lat: 40.1956, lng: 29.0611, location: 'Bursa', risk_level: Math.floor(Math.random() * 100) },
+                { lat: 36.8969, lng: 30.7133, location: 'Antalya', risk_level: Math.floor(Math.random() * 100) }
             ]
         };
 
         return new Promise(resolve => {
             setTimeout(() => {
                 resolve(demoData[endpoint] || {});
-            }, 1000);
+            }, Math.random() * 1000 + 500); // Random delay 500-1500ms
         });
     }
 }

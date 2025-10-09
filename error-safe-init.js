@@ -2,6 +2,12 @@
 window.addEventListener('DOMContentLoaded', function() {
     console.log('🔧 Starting error-safe app initialization...');
     
+    // Initialize theme immediately
+    const savedTheme = localStorage.getItem('risko-theme');
+    const systemPreference = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    const theme = savedTheme || systemPreference;
+    document.documentElement.setAttribute('data-theme', theme);
+    
     // Wait for all libraries to load
     function initializeWhenReady() {
         if (typeof Chart === 'undefined' || typeof L === 'undefined' || typeof Swal === 'undefined') {
@@ -31,8 +37,29 @@ window.addEventListener('DOMContentLoaded', function() {
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             `;
             document.body.appendChild(notification);
+            
+            // Initialize basic theme toggle
+            const themeToggle = document.getElementById('theme-toggle');
+            if (themeToggle) {
+                themeToggle.addEventListener('click', () => {
+                    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+                    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+                    document.documentElement.setAttribute('data-theme', newTheme);
+                    localStorage.setItem('risko-theme', newTheme);
+                });
+            }
         }
     }
     
     initializeWhenReady();
+    
+    // Handle page visibility changes for better performance
+    document.addEventListener('visibilitychange', () => {
+        if (window.app && document.visibilityState === 'visible') {
+            // Refresh data when page becomes visible
+            if (window.app.currentPage === 'dashboard') {
+                window.app.refreshDashboardData();
+            }
+        }
+    });
 });
