@@ -879,6 +879,71 @@ class RiskoPlatformApp {
         }
     }
 
+    setupDataRefresh() {
+        // Refresh dashboard data every 2 minutes
+        this.dataRefreshInterval = setInterval(() => {
+            if (this.currentPage === 'dashboard') {
+                this.refreshDashboardData();
+            }
+        }, 120000);
+        
+        // Refresh current page data every 5 minutes
+        this.pageRefreshInterval = setInterval(() => {
+            this.refreshCurrentPageData();
+        }, 300000);
+    }
+
+    async refreshDashboardData() {
+        try {
+            console.log('🔄 Dashboard verileri yenileniyor...');
+            
+            // Update stats with animation
+            const newStats = await this.apiClient.getDashboardStats();
+            this.updateStatsWithAnimation(newStats);
+            
+            // Refresh recent activities
+            const activities = await this.apiClient.getRecentActivities();
+            this.displayRecentActivities(activities);
+            
+            // Update chart data
+            this.updateChartData();
+            
+        } catch (error) {
+            console.error('Dashboard yenileme hatası:', error);
+        }
+    }
+
+    async refreshCurrentPageData() {
+        try {
+            console.log(`🔄 ${this.currentPage} sayfa verileri yenileniyor...`);
+            await this.loadPageData(this.currentPage);
+        } catch (error) {
+            console.error('Sayfa yenileme hatası:', error);
+        }
+    }
+
+    updateStatsWithAnimation(stats) {
+        const elements = [
+            { id: 'total-analyses', value: stats.total || 1247 },
+            { id: 'low-risk-count', value: stats.low || 934 },
+            { id: 'medium-risk-count', value: stats.medium || 231 },
+            { id: 'high-risk-count', value: stats.high || 82 }
+        ];
+
+        elements.forEach(({ id, value }) => {
+            this.animateCounter(id, value);
+        });
+    }
+
+    updateChartData() {
+        if (this.charts.riskChart) {
+            // Generate new random data for demo
+            const newData = Array.from({ length: 6 }, () => Math.floor(Math.random() * 100));
+            this.charts.riskChart.data.datasets[0].data = newData;
+            this.charts.riskChart.update('active');
+        }
+    }
+
     // Clean up intervals when app is destroyed
     destroy() {
         if (this.dataRefreshInterval) {
@@ -964,6 +1029,14 @@ class RiskoPlatformApp {
         return icons[type] || 'info-circle';
     }
 
+    stopDataRefresh() {
+        if (this.refreshInterval) {
+            clearInterval(this.refreshInterval);
+            this.refreshInterval = null;
+            console.log('📱 Otomatik veri güncelleme durduruldu');
+        }
+    }
+
     getRiskColor(score) {
         if (score < 30) return 'success';
         if (score < 70) return 'warning';
@@ -1042,12 +1115,39 @@ class RiskoPlatformApp {
             cancelButtonText: 'İptal'
         }).then((result) => {
             if (result.isConfirmed) {
+                // Clean up before logout
+                this.destroy();
+                
                 // Clear user data and redirect
                 sessionStorage.removeItem('risko_user');
                 localStorage.removeItem('risko_preferences');
                 window.location.href = './login.html';
             }
         });
+    }
+
+    // Clean up intervals when app is destroyed
+    destroy() {
+        if (this.dataRefreshInterval) {
+            clearInterval(this.dataRefreshInterval);
+        }
+        if (this.pageRefreshInterval) {
+            clearInterval(this.pageRefreshInterval);
+        }
+        
+        // Clean up charts
+        Object.values(this.charts).forEach(chart => {
+            if (chart && typeof chart.destroy === 'function') {
+                chart.destroy();
+            }
+        });
+        
+        // Clean up map
+        if (this.map) {
+            this.map.remove();
+        }
+        
+        console.log('🧹 Kürşat\'ın Risko Platform\'u temizlendi');
     }
 }
 

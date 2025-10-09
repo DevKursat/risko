@@ -37,9 +37,16 @@ window.addEventListener('DOMContentLoaded', function() {
         
         try {
             window.app = new RiskoPlatformApp();
-            console.log('🚀 Risko Platform başarıyla başlatıldı!');
+            console.log('🚀 Kürşat\'ın Risko Platform\'u başarıyla başlatıldı!');
         } catch (error) {
             console.error('❌ Platform başlatma hatası:', error);
+            console.error('Stack trace:', error.stack);
+            
+            // Show detailed error for debugging
+            if (error.message.includes('setupDataRefresh')) {
+                console.error('🔧 setupDataRefresh metodunun tanımlanması gerekiyor');
+            }
+            
             initializeFallbackMode();
         }
     }
