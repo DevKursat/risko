@@ -5,6 +5,8 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from app.core.config import settings
 from app.core.metrics import MetricsMiddleware, set_metrics_middleware, get_metrics_middleware
 from app.api import risk, b2b
@@ -67,16 +69,40 @@ async def log_requests(request: Request, call_next):
 app.include_router(risk.router, prefix=f"{settings.API_V1_STR}/risk", tags=["Risk Analysis"])
 app.include_router(b2b.router, prefix=f"{settings.API_V1_STR}/b2b", tags=["B2B API"])
 
+# Mount static files for frontend
+frontend_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
+if os.path.exists(frontend_dir):
+    app.mount("/static", StaticFiles(directory=frontend_dir), name="static")
+    logger.info(f"Mounted static files from: {frontend_dir}")
+else:
+    logger.warning(f"Frontend directory not found: {frontend_dir}")
+
 @app.get("/")
-async def root():
-    return {
-        "message": "Welcome to Risko Platform",
-        "description": "AI-powered regional disaster and crisis risk modeling",
-        "version": settings.VERSION,
-        "status": "healthy",
-        "docs": "/docs" if settings.ENVIRONMENT != "production" else "disabled",
-        "environment": settings.ENVIRONMENT
-    }
+async def serve_frontend():
+    """Serve the frontend application."""
+    frontend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "index.html")
+    if os.path.exists(frontend_path):
+        return FileResponse(frontend_path)
+    else:
+        logger.warning(f"Frontend file not found: {frontend_path}")
+        return {
+            "message": "Welcome to Risko Platform API",
+            "description": "AI-powered regional disaster and crisis risk modeling",
+            "version": settings.VERSION,
+            "status": "healthy",
+            "docs": "/docs" if settings.ENVIRONMENT != "production" else "disabled",
+            "environment": settings.ENVIRONMENT,
+            "frontend": "Frontend files not found. Please check frontend directory."
+        }
+
+@app.get("/app")
+async def serve_app():
+    """Alternative endpoint to serve the frontend application."""
+    frontend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "index.html")
+    if os.path.exists(frontend_path):
+        return FileResponse(frontend_path)
+    else:
+        return {"error": "Frontend not found"}
 
 @app.get("/health")
 async def health_check():

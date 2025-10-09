@@ -1,19 +1,19 @@
 # Development Docker Compose
-version: '3.8'
-
 services:
   risko-api:
     build: 
-      context: ./backend
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: backend/Dockerfile.dev
     ports:
       - "8000:8000"
     environment:
       - ENVIRONMENT=development
       - DATABASE_URL=sqlite:///./risko.db
     volumes:
-      - ./backend:/app
-      - ./backend/.env:/app/.env
+      - ./backend:/app/backend
+      - ./frontend:/app/frontend
+      - ./backend/.env:/app/backend/.env
+    working_dir: /app/backend
     restart: unless-stopped
 
   postgres:

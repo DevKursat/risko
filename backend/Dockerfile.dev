@@ -18,13 +18,13 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Install Python dependencies
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY backend/requirements.txt backend/requirements.txt
+RUN pip install --no-cache-dir -r backend/requirements.txt
 
 # Install development dependencies
 RUN pip install --no-cache-dir pytest-watch
 
-# Copy project
+# Copy project (this will be overridden by volume mounts in development)
 COPY . .
 
 # Expose port
