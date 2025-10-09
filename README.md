@@ -34,11 +34,25 @@ Risko aggregates multiple data sources and provides:
 
 ## 🛠️ Technology Stack
 
-- **Backend**: FastAPI (Python)
+### Frontend
+- **Framework**: Modern HTML5, CSS3, JavaScript (ES6+)
+- **UI Library**: Bootstrap 5
+- **Icons**: Font Awesome 6
+- **Fonts**: Google Fonts (Inter)
+- **Features**: Responsive design, interactive forms, real-time API integration
+
+### Backend
+- **Framework**: FastAPI (Python)
 - **Database**: PostgreSQL with PostGIS
 - **Geocoding**: Geopy
 - **ML/AI**: TensorFlow, scikit-learn
 - **API Documentation**: OpenAPI/Swagger
+
+### DevOps
+- **Containerization**: Docker & Docker Compose
+- **Web Server**: Nginx (production)
+- **Monitoring**: Health checks, metrics collection
+- **Deployment**: Automated deployment scripts
 
 ## 📦 Installation & Deployment
 
@@ -62,6 +76,22 @@ cd risko
 The API will be available at:
 - Development: `http://localhost:8000`
 - Production: `https://localhost` (with SSL)
+
+### 🌐 Web Interface
+
+Access the professional web interface at:
+- **Main Application**: `http://localhost:8000`
+- **API Documentation**: `http://localhost:8000/docs`
+- **Health Check**: `http://localhost:8000/health`
+- **System Metrics**: `http://localhost:8000/metrics`
+
+#### Web Interface Features:
+- 🎨 **Modern UI**: Professional design with gradient themes
+- 📱 **Responsive**: Mobile-first design, works on all devices  
+- ⚡ **Interactive**: Real-time risk analysis with form validation
+- 📊 **Visualizations**: Progress bars, risk cards, and interactive elements
+- 🚀 **Fast**: Optimized loading with modern CSS/JS
+- 🔍 **SEO Ready**: Meta tags, favicon, and structured markup
 
 ### Manual Installation
 
