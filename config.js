@@ -1,4 +1,4 @@
-// Risko Platform Configuration
+// Risko Configuration
 window.RISKO_CONFIG = {
     // API Configuration
     API_BASE_URL: 'http://localhost:8001', // Backend API URL

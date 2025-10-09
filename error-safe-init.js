@@ -1,6 +1,6 @@
 // Enhanced error-safe initialization with better loading
 window.addEventListener('DOMContentLoaded', function() {
-    console.log('🔧 Risko Platform başlatılıyor...');
+    console.log('🔧 Risko başlatılıyor...');
     
     // Initialize theme immediately
     const savedTheme = localStorage.getItem('risko-theme');
@@ -37,7 +37,7 @@ window.addEventListener('DOMContentLoaded', function() {
         
         try {
             window.app = new RiskoPlatformApp();
-            console.log('🚀 Risko Platform başarıyla başlatıldı!');
+            console.log('🚀 Risko başarıyla başlatıldı!');
         } catch (error) {
             console.error('❌ Platform başlatma hatası:', error);
             console.error('Stack trace:', error.stack);
