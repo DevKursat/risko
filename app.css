@@ -83,9 +83,7 @@ body {
     animation: fadeInUp 0.6s ease-out;
 }
 
-.loading-logo {
-    animation: pulse 3s ease-in-out infinite;
-}
+/* loading-logo pulse removed for minimal */
 
 .loading-spinner {
     margin: 2rem 0;
@@ -524,16 +522,7 @@ canvas {
     }
 }
 
-@keyframes pulse {
-    0%, 100% {
-        opacity: 1;
-        transform: scale(1);
-    }
-    50% {
-        opacity: 0.8;
-        transform: scale(1.02);
-    }
-}
+/* removed pulse keyframes */
 
 /* Responsive Design */
 @media (max-width: 768px) {
@@ -1088,17 +1077,7 @@ canvas {
         transform: translateY(0);
     }
 }
-
-@keyframes fadeInScale {
-    from {
-        opacity: 0;
-        transform: scale(0.95);
-    }
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
-}
+/* removed pulse keyframes */
 
 /* Staggered animations for dashboard cards */
 .dashboard-card:nth-child(1) { animation: slideInUp 0.6s ease 0.1s both; }

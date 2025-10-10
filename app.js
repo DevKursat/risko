@@ -95,9 +95,10 @@ class RiskoPlatformApp {
     
     updateParticleColors() {
         const particles = document.querySelectorAll('.particle');
+        // Minimal grayscale palette
         const colors = this.currentTheme === 'dark' 
-            ? ['rgba(59, 130, 246, 0.3)', 'rgba(16, 185, 129, 0.2)', 'rgba(139, 92, 246, 0.25)']
-            : ['rgba(37, 99, 235, 0.2)', 'rgba(5, 150, 105, 0.15)', 'rgba(8, 145, 178, 0.2)'];
+            ? ['rgba(255,255,255,0.15)', 'rgba(255,255,255,0.08)', 'rgba(255,255,255,0.12)']
+            : ['rgba(0,0,0,0.08)', 'rgba(0,0,0,0.12)', 'rgba(0,0,0,0.05)'];
         
         particles.forEach((particle, index) => {
             particle.style.background = colors[index % colors.length];
@@ -1129,11 +1130,11 @@ Ankara Çankaya
     }
 
     setupReportsFilters() {
-        // Filter functionality
-        const filterBtn = document.querySelector('#reports-list').closest('.card').querySelector('[onclick="app.filterReports()"]');
-        if (filterBtn) {
-            filterBtn.onclick = () => this.filterReports();
-        }
+        // Filter functionality (null-safe)
+        const reportsList = document.querySelector('#reports-list');
+        const card = reportsList ? reportsList.closest('.card') : null;
+        const filterBtn = card ? card.querySelector('[onclick="app.filterReports()"]') : null;
+        if (filterBtn) filterBtn.onclick = () => this.filterReports();
         
         // Export functionality
         const pdfBtn = document.querySelector('[onclick="app.exportReports(\'pdf\')"]');
@@ -1637,6 +1638,8 @@ Ankara Çankaya
     }
 
     displayAnalysisResults(result) {
+        // Persist last analysis to enable export/share later
+        this.lastAnalysisResult = result;
         const resultsDiv = document.getElementById('analysis-results');
         resultsDiv.innerHTML = `
             <div class="card border-0 shadow-lg">
@@ -1649,8 +1652,8 @@ Ankara Çankaya
                             <p class="mb-0 opacity-90">Detaylı risk değerlendirmesi ve öneriler</p>
                         </div>
                         <div class="text-end">
-                            <span class="badge bg-warning bg-opacity-20 text-white">
-                                <i class="fas fa-circle text-success" style="animation: pulse 2s infinite;"></i>
+                            <span class="badge bg-light text-dark border border-1">
+                                <i class="fas fa-circle text-success"></i>
                                 CANLI VERİ
                             </span>
                             <br>
@@ -1784,6 +1787,77 @@ Ankara Çankaya
         setTimeout(() => {
             this.initRiskDistributionChart(result.risk_breakdown);
         }, 100);
+    }
+
+    buildAnalysisHTMLReport(result) {
+        const riskEntries = Object.entries(result.risk_breakdown || {});
+        const badgeColor = this.getRiskColor(result.overall_score);
+        return `<!DOCTYPE html>
+        <html lang="tr">
+        <head>
+            <meta charset="UTF-8" />
+            <title>Risko Analizi Raporu</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <style>
+                body { font-family: Arial, sans-serif; margin: 24px; color: #111; }
+                .header { text-align: center; margin-bottom: 24px; }
+                .muted { color: #6b7280; font-size: 12px; }
+                .badge { display:inline-block; padding:4px 10px; border-radius:12px; font-weight:600; }
+                .badge-success { background:#10b981; color:#fff; }
+                .badge-warning { background:#f59e0b; color:#111; }
+                .badge-danger { background:#ef4444; color:#fff; }
+                .section { margin: 18px 0; }
+                .card { border:1px solid #e5e7eb; border-radius:8px; padding:16px; margin: 10px 0; }
+                .row { display:flex; gap:16px; }
+                .col { flex:1; }
+                .progress { height: 20px; background:#f3f4f6; border-radius:10px; overflow:hidden; }
+                .bar { height:100%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; }
+                .bar.success { background:#10b981; }
+                .bar.warning { background:#f59e0b; }
+                .bar.danger { background:#ef4444; }
+                .grid { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px; }
+                .small { font-size: 12px; }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h2>Risko Analizi Raporu</h2>
+                <div class="muted">Oluşturulma: ${new Date().toLocaleString('tr-TR')}</div>
+            </div>
+            <div class="card section">
+                <strong>Genel Risk Skoru</strong>
+                <div class="progress" style="margin-top:8px">
+                    <div class="bar ${badgeColor === 'success' ? 'success' : badgeColor === 'warning' ? 'warning' : 'danger'}" style="width:${result.overall_score}%">${result.overall_score}% • ${this.getRiskLevel(result.overall_score)}</div>
+                </div>
+            </div>
+            <div class="section">
+                <strong>Risk Dağılımı</strong>
+                <div class="grid" style="margin-top:8px">
+                    ${riskEntries.map(([k,v]) => `<div class="card"><div style="font-weight:600; margin-bottom:6px">${this.getRiskTitle(k)}</div><div class="progress"><div class="bar ${this.getRiskColor(v)}" style="width:${v}%">${v}%</div></div></div>`).join('')}
+                </div>
+            </div>
+            ${Array.isArray(result.recommendations) && result.recommendations.length ? `
+            <div class="card section">
+                <strong>Öneriler</strong>
+                <ul>
+                    ${result.recommendations.map(r => `<li class="small">${r}</li>`).join('')}
+                </ul>
+            </div>` : ''}
+            ${result.address ? `<div class="muted">Adres: ${result.address}</div>` : ''}
+        </body>
+        </html>`;
+    }
+
+    downloadBlobAs(filename, mime, data) {
+        const blob = new Blob([data], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
     }
 
     startRealtimeAnalysisUpdates(initialResult, coordinates, analysisData) {
@@ -2690,8 +2764,8 @@ Ankara Çankaya
         const indicator = document.getElementById('live-indicator');
         if (indicator) {
             indicator.innerHTML = `
-                <span class="badge bg-success">
-                    <i class="fas fa-circle" style="animation: pulse 2s infinite;"></i>
+                <span class="badge bg-light text-dark border">
+                    <i class="fas fa-circle text-success"></i>
                     CANLI VERİ
                 </span>
                 <small class="text-muted ms-2">Son güncelleme: ${new Date().toLocaleTimeString('tr-TR')}</small>
@@ -2774,8 +2848,27 @@ Ankara Çankaya
     }
 
     showNotification(message, type = 'info', duration = 5000) {
-        const container = document.getElementById('notification-container');
-        const id = 'notification-' + Date.now();
+        // Throttling & de-duplication (type-specific)
+        if (!this._notificationCache) this._notificationCache = new Map();
+        const now = Date.now();
+        const key = `${type}|${message}`;
+        const last = this._notificationCache.get(key) || 0;
+        const typeThrottle = { info: 60000, success: 15000, warning: 30000, error: 5000 };
+        const throttleMs = typeThrottle[type] ?? 15000;
+        if (now - last < throttleMs) {
+            return; // drop duplicate/spam
+        }
+        this._notificationCache.set(key, now);
+
+        const container = document.getElementById('notification-container') || (() => {
+            const el = document.createElement('div');
+            el.id = 'notification-container';
+            el.className = 'position-fixed top-0 end-0 p-3';
+            el.style.zIndex = 9999;
+            document.body.appendChild(el);
+            return el;
+        })();
+        const id = 'notification-' + now;
         
         const notification = document.createElement('div');
         notification.id = id;
@@ -2795,6 +2888,12 @@ Ankara Çankaya
                 element.remove();
             }
         }, duration);
+    }
+
+    // Shim for older calls using showAlert(type, message)
+    showAlert(type, message, duration = 5000) {
+        const map = { success: 'success', error: 'error', danger: 'error', warning: 'warning', info: 'info' };
+        this.showNotification(message, map[type] || 'info', duration);
     }
 
     getNotificationIcon(type) {
@@ -3033,8 +3132,24 @@ Ankara Çankaya
     }
 
     async downloadReport() {
-        this.showNotification('Rapor indiriliyor...', 'info');
-        // Implementation for PDF download
+        try {
+            if (!this.lastAnalysisResult) {
+                this.showNotification('Önce bir analiz yapın, sonra indiriniz.', 'warning');
+                return;
+            }
+            this.showNotification('PDF hazırlanıyor...', 'info', 3000);
+            const html = this.buildAnalysisHTMLReport({
+                ...this.lastAnalysisResult,
+                address: document.getElementById('address')?.value || this.lastAnalysisResult.address
+            });
+            // For now, download as .html (client-only). Later can be rendered to PDF server-side or via client lib.
+            const filename = `risko-analizi-${new Date().toISOString().replace(/[:.]/g, '-')}.html`;
+            this.downloadBlobAs(filename, 'text/html;charset=utf-8', html);
+            this.showNotification('İndirme hazırlandı', 'success', 3000);
+        } catch (err) {
+            console.error('PDF indirme hatası:', err);
+            this.showNotification('PDF oluşturulurken hata oluştu', 'error');
+        }
     }
 
     async shareAnalysis() {

@@ -78,22 +78,22 @@ body::after {
     width: 100vw;
     height: 100vh;
     z-index: -1;
-    background: 
-        radial-gradient(circle at 20% 80%, rgba(37, 99, 235, 0.06) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.04) 0%, transparent 50%),
-        radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.03) 0%, transparent 50%),
-        linear-gradient(135deg, rgba(37, 99, 235, 0.01) 0%, rgba(59, 130, 246, 0.005) 100%);
+    background:
+        radial-gradient(circle at 20% 80%, rgba(0,0,0,0.05) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(0,0,0,0.03) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(0,0,0,0.02) 0%, transparent 50%),
+        linear-gradient(135deg, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.01) 100%);
     animation: backgroundShift 30s ease-in-out infinite;
     transition: var(--transition);
 }
 
 /* Dark mode background */
 [data-theme="dark"] body::after {
-    background: 
-        radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.06) 0%, transparent 50%),
-        radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.04) 0%, transparent 50%),
-        linear-gradient(135deg, rgba(30, 41, 59, 0.2) 0%, rgba(15, 23, 42, 0.3) 100%);
+    background:
+        radial-gradient(circle at 20% 80%, rgba(255,255,255,0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255,255,255,0.06) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(255,255,255,0.04) 0%, transparent 50%),
+        linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.03) 100%);
 }
 
 @keyframes backgroundShift {
@@ -130,31 +130,31 @@ body::after {
     position: absolute;
     width: 2px;
     height: 2px;
-    background: var(--primary-color);
+    background: rgba(0,0,0,0.15);
     border-radius: 50%;
-    opacity: 0.4;
-    animation: float 20s linear infinite;
+    opacity: 0.25;
+    animation: float 30s linear infinite;
 }
 
 .particle:nth-child(2n) {
-    background: var(--success-color);
-    animation-duration: 25s;
+    background: rgba(0,0,0,0.12);
+    animation-duration: 35s;
     width: 3px;
     height: 3px;
-    opacity: 0.3;
+    opacity: 0.2;
 }
 
 .particle:nth-child(3n) {
-    background: var(--info-color);
-    animation-duration: 30s;
+    background: rgba(0,0,0,0.08);
+    animation-duration: 40s;
     width: 1px;
     height: 1px;
-    opacity: 0.5;
+    opacity: 0.3;
 }
 
 .particle:nth-child(4n) {
-    background: rgba(139, 92, 246, 0.6);
-    animation-duration: 22s;
+    background: rgba(0,0,0,0.1);
+    animation-duration: 32s;
     width: 2px;
     height: 2px;
 }
@@ -524,6 +524,46 @@ body::after {
 [data-theme="dark"] .table-striped tbody tr:nth-of-type(odd) {
     background: rgba(255, 255, 255, 0.05);
 }
+
+/* Dark mode dropdown menu and items */
+[data-theme="dark"] .dropdown-menu {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.35);
+}
+
+[data-theme="dark"] .dropdown-item {
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .dropdown-item:hover,
+[data-theme="dark"] .dropdown-item:focus {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+[data-theme="dark"] .dropdown-divider {
+    border-top-color: var(--border-color);
+}
+
+/* Dark mode table header for better contrast */
+[data-theme="dark"] .table thead th {
+    background: var(--bg-tertiary) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+}
+
+/* Dark mode navbar hover/active background contrast */
+[data-theme="dark"] .navbar-nav .nav-link:hover,
+[data-theme="dark"] .navbar-nav .nav-link.active {
+    background: rgba(59, 130, 246, 0.2) !important; /* slightly stronger for dark */
+    color: var(--text-primary) !important;
+}
+
+/* Badge tweaks in dark mode for readability */
+[data-theme="dark"] .badge.bg-warning { color: #111 !important; }
+[data-theme="dark"] .badge.bg-info { color: #0b3b47 !important; }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
@@ -995,14 +1035,7 @@ h1, h2, h3, h4, h5, h6 {
     }
 }
 
-@keyframes pulse {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.7; }
-}
-
-.animate-pulse {
-    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
+/* removed pulse/breathing animation */
 
 /* Responsive Design */
 @media (max-width: 768px) {
@@ -1119,27 +1152,11 @@ h1, h2, h3, h4, h5, h6 {
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.live-pulse {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
+.live-pulse { display: flex; align-items: center; gap: 8px; }
 
-.pulse-dot {
-    width: 8px;
-    height: 8px;
-    background: #00ff00;
-    border-radius: 50%;
-    animation: pulse 1.5s infinite;
-}
+.pulse-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; }
 
-.live-text {
-    color: #00ff00;
-    font-size: 12px;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
+.live-text { color: #16a34a; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; }
 
 .error-pulse {
     display: flex;
@@ -1147,13 +1164,7 @@ h1, h2, h3, h4, h5, h6 {
     gap: 8px;
 }
 
-.error-dot {
-    width: 8px;
-    height: 8px;
-    background: #ff4444;
-    border-radius: 50%;
-    animation: pulse 1s infinite;
-}
+.error-dot { width: 8px; height: 8px; background: #ef4444; border-radius: 50%; }
 
 .error-text {
     color: #ff4444;
@@ -1163,11 +1174,7 @@ h1, h2, h3, h4, h5, h6 {
     letter-spacing: 1px;
 }
 
-@keyframes pulse {
-    0% { transform: scale(1); opacity: 1; }
-    50% { transform: scale(1.2); opacity: 0.7; }
-    100% { transform: scale(1); opacity: 1; }
-}
+/* Removed pulse animation for minimal aesthetic */
 
 /* API Status Display */
 .api-status-container {
