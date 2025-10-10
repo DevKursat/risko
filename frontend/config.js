@@ -1,11 +1,14 @@
 // Risko Platform Configuration
-window.RISKO_CONFIG = {
-    // API Configuration
-    API_BASE_URL: 'https://your-backend-api.herokuapp.com', // Change this for production deployment
-    
-    // Demo Mode - set to true for GitHub Pages deployment
-    DEMO_MODE: true, // Set to false when connecting to live API
-    DEMO_BANNER: true,
+(function(){
+    const stored = (typeof localStorage !== 'undefined') ? localStorage.getItem('risko_api_base') : null;
+    const defaultApi = stored || 'http://localhost:8000';
+    window.RISKO_CONFIG = {
+        // API Configuration
+        API_BASE_URL: defaultApi, // Prod: burayı kendi API domaininize ayarlayın veya localStorage 'risko_api_base' kullanın
+        
+        // Demo Mode
+        DEMO_MODE: false, // GitHub Pages dahil tüm ortamlarda gerçek API
+        DEMO_BANNER: false,
     
     // Analytics
     GOOGLE_ANALYTICS_ID: '', // Add your GA4 ID here
@@ -60,29 +63,29 @@ window.RISKO_CONFIG = {
         ENTERPRISE: { analyses_per_month: -1, api_access: true, price: 499 }
     },
     
-    // Deployment Information
-    VERSION: '2.0.0',
-    BUILD_DATE: new Date().toISOString(),
-    ENVIRONMENT: 'production'
-};
+        // Deployment Information
+        VERSION: '2.0.0',
+        BUILD_DATE: new Date().toISOString(),
+        ENVIRONMENT: 'production'
+    };
 
-// Auto-detect environment and adjust settings
-(function() {
+    // Auto-detect environment and adjust settings (demo kapalı kalır)
     const hostname = window.location.hostname;
     
     if (hostname.includes('github.io')) {
-        // GitHub Pages deployment
-        window.RISKO_CONFIG.DEMO_MODE = true;
+        // GitHub Pages deployment (demo MODE OFF)
         window.RISKO_CONFIG.ENVIRONMENT = 'github-pages';
-        console.log('🚀 Risko Platform running on GitHub Pages');
+        console.log('🚀 Risko Platform on GitHub Pages (real API)');
     } else if (hostname === 'localhost' || hostname === '127.0.0.1') {
         // Local development
         window.RISKO_CONFIG.FEATURES.DEBUG_MODE = true;
         window.RISKO_CONFIG.ENVIRONMENT = 'development';
-        console.log('🛠️ Risko Platform running in development mode');
+        window.RISKO_CONFIG.DEMO_MODE = false; // localde gerçek API
+        window.RISKO_CONFIG.API_BASE_URL = defaultApi;
+        console.log('🛠️ Risko Platform running in development mode (real API)');
     } else {
         // Production deployment
-        window.RISKO_CONFIG.DEMO_MODE = false; // Set to true if API is not ready
+        window.RISKO_CONFIG.DEMO_MODE = false;
         window.RISKO_CONFIG.ENVIRONMENT = 'production';
         console.log('🌟 Risko Platform running in production mode');
     }

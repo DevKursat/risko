@@ -36,5 +36,15 @@ class Settings(BaseSettings):
     GOOGLE_MAPS_API_KEY: Optional[str] = None
     OPENWEATHER_API_KEY: Optional[str] = None
 
+    # Frontend
+    FRONTEND_BASE_URL: Optional[str] = None
+
+    # SMTP
+    SMTP_HOST: Optional[str] = None
+    SMTP_PORT: Optional[int] = None
+    SMTP_USERNAME: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
+    SMTP_TLS: bool = True
+
 
 settings = Settings()

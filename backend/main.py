@@ -4,12 +4,14 @@ import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
 from app.core.config import settings
 from app.core.metrics import MetricsMiddleware, set_metrics_middleware, get_metrics_middleware
 from app.api import risk, b2b
+from app.api.auth import routes as auth_routes
+from app.db.session import Base, engine
 
 # Logging configuration
 logging.basicConfig(
@@ -25,6 +27,16 @@ app = FastAPI(
     docs_url="/docs" if settings.ENVIRONMENT != "production" else None,
     redoc_url="/redoc" if settings.ENVIRONMENT != "production" else None
 )
+
+# Ensure DB tables exist (simple init; in prod use Alembic)
+# Add gzip compression (beneficial for JSON responses)
+app.add_middleware(GZipMiddleware, minimum_size=500)
+
+try:
+    Base.metadata.create_all(bind=engine)
+    logger.info("Database tables ensured (create_all).")
+except Exception as e:
+    logger.error(f"DB init failed: {e}")
 
 # Add metrics middleware first
 metrics_middleware = MetricsMiddleware(app)
@@ -68,41 +80,18 @@ async def log_requests(request: Request, call_next):
 # Include routers (preserve existing functionality)
 app.include_router(risk.router, prefix=f"{settings.API_V1_STR}/risk", tags=["Risk Analysis"])
 app.include_router(b2b.router, prefix=f"{settings.API_V1_STR}/b2b", tags=["B2B API"])
+app.include_router(auth_routes.router, prefix=f"{settings.API_V1_STR}/auth", tags=["Auth"])
 
-# Mount static files for frontend
+"""
+Serve frontend static files under /app path. Keep root (/) for API health/info JSON
+to satisfy tests expecting JSON at root. Frontend HTML can be accessed at /app/index.html.
+"""
 frontend_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend")
 if os.path.exists(frontend_dir):
-    app.mount("/static", StaticFiles(directory=frontend_dir), name="static")
-    logger.info(f"Mounted static files from: {frontend_dir}")
+    app.mount("/app", StaticFiles(directory=frontend_dir, html=True), name="frontend")
+    logger.info(f"Mounted frontend at '/app': {frontend_dir}")
 else:
     logger.warning(f"Frontend directory not found: {frontend_dir}")
-
-@app.get("/")
-async def serve_frontend():
-    """Serve the frontend application."""
-    frontend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "index.html")
-    if os.path.exists(frontend_path):
-        return FileResponse(frontend_path)
-    else:
-        logger.warning(f"Frontend file not found: {frontend_path}")
-        return {
-            "message": "Welcome to Risko Platform API",
-            "description": "AI-powered regional disaster and crisis risk modeling",
-            "version": settings.VERSION,
-            "status": "healthy",
-            "docs": "/docs" if settings.ENVIRONMENT != "production" else "disabled",
-            "environment": settings.ENVIRONMENT,
-            "frontend": "Frontend files not found. Please check frontend directory."
-        }
-
-@app.get("/app")
-async def serve_app():
-    """Alternative endpoint to serve the frontend application."""
-    frontend_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "frontend", "index.html")
-    if os.path.exists(frontend_path):
-        return FileResponse(frontend_path)
-    else:
-        return {"error": "Frontend not found"}
 
 @app.get("/health")
 async def health_check():
@@ -134,3 +123,10 @@ async def global_exception_handler(request: Request, exc: Exception):
         status_code=500,
         content={"detail": "Internal server error", "path": str(request.url.path)}
     )
+
+@app.get("/")
+async def root():
+    return {
+        "message": "Risko API",
+        "version": settings.VERSION
+    }

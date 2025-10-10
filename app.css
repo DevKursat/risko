@@ -1238,3 +1238,98 @@ canvas {
         transition-duration: 0.01ms !important;
     }
 }
+
+/* Subtle background animation and particles (grayscale, low motion) */
+body {
+    background-color: var(--bg-primary);
+}
+
+/* Soft radial vignette drifting slowly */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background: radial-gradient(1200px 800px at 10% 20%, rgba(0,0,0,0.06), transparent 60%),
+                radial-gradient(900px 700px at 90% 80%, rgba(0,0,0,0.04), transparent 55%);
+    animation: bgDrift 80s ease-in-out infinite alternate;
+}
+
+@keyframes bgDrift {
+    0% {
+        transform: translate3d(0, 0, 0) scale(1);
+        filter: none;
+    }
+    100% {
+        transform: translate3d(0, -10px, 0) scale(1.02);
+        filter: saturate(0.95);
+    }
+}
+
+/* Particle layer (kept very minimal) */
+.particles-container {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.particle {
+    position: absolute;
+    top: 10%;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.06);
+    filter: blur(0.5px);
+    animation: floatY linear infinite alternate;
+}
+
+@keyframes floatY {
+    0% { transform: translate3d(0, 0, 0); opacity: 0.5; }
+    100% { transform: translate3d(0, 40px, 0); opacity: 0.8; }
+}
+
+/* Keep app content above background layers */
+.app-container, .loading-screen, nav.navbar, footer {
+    position: relative;
+    z-index: 1;
+}
+
+/* Hide particles on small screens for performance */
+@media (max-width: 768px) {
+    .particles-container { display: none; }
+}
+
+/* Dark-mode form readability improvements */
+[data-theme="dark"] .form-control,
+[data-theme="dark"] textarea,
+[data-theme="dark"] input {
+    caret-color: var(--text-primary);
+}
+
+[data-theme="dark"] .form-control::placeholder,
+[data-theme="dark"] textarea::placeholder,
+[data-theme="dark"] input::placeholder {
+    color: #94a3b8;
+    opacity: 0.9;
+}
+
+.theme-dark .form-control,
+.theme-dark textarea,
+.theme-dark input {
+    caret-color: var(--text-primary);
+}
+
+.theme-dark .form-control::placeholder,
+.theme-dark textarea::placeholder,
+.theme-dark input::placeholder {
+    color: #94a3b8;
+    opacity: 0.9;
+}
+
+/* Clickable cards helper */
+.clickable-card { cursor: pointer; }
+.clickable-card:focus { outline: 2px solid var(--primary-color); outline-offset: 2px; }

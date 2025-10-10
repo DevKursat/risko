@@ -918,9 +918,20 @@ class RiskoPlatformApp {
             cancelButtonText: 'İptal'
         }).then((result) => {
             if (result.isConfirmed) {
+                // Revoke refresh token (best effort)
+                const refresh = localStorage.getItem('risko_refresh_token');
+                if (refresh) {
+                    fetch(`${this.apiClient.baseURL}/api/v1/auth/logout`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ refresh_token: refresh })
+                    }).finally(() => {});
+                }
                 // Clear user data and redirect
                 sessionStorage.removeItem('risko_user');
                 localStorage.removeItem('risko_preferences');
+                localStorage.removeItem('risko_access_token');
+                localStorage.removeItem('risko_refresh_token');
                 window.location.href = './login.html';
             }
         });
@@ -934,21 +945,39 @@ class APIClient {
     constructor() {
         this.baseURL = window.RISKO_CONFIG?.API_BASE_URL || 'http://localhost:8000';
         this.demoMode = window.RISKO_CONFIG?.DEMO_MODE || false;
+        this.getAccessToken = () => localStorage.getItem('risko_access_token');
+        this.getRefreshToken = () => localStorage.getItem('risko_refresh_token');
     }
 
     async request(endpoint, options = {}) {
-        if (this.demoMode) {
-            return this.getDemoData(endpoint);
-        }
+        // Demo modu kapalı: gerçek API zorunlu
 
         try {
-            const response = await fetch(`${this.baseURL}/api/v1${endpoint}`, {
+            const headers = {
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+            const token = this.getAccessToken();
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+
+            const doFetch = () => fetch(`${this.baseURL}/api/v1${endpoint}`, {
                 headers: {
-                    'Content-Type': 'application/json',
-                    ...options.headers
+                    ...headers
                 },
                 ...options
             });
+
+            let response = await doFetch();
+
+            // If unauthorized and we have a refresh token, try to refresh once
+            if (response.status === 401) {
+                const refreshed = await this.tryRefresh();
+                if (refreshed) {
+                    const newToken = this.getAccessToken();
+                    if (newToken) headers['Authorization'] = `Bearer ${newToken}`;
+                    response = await doFetch();
+                }
+            }
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
@@ -957,8 +986,26 @@ class APIClient {
             return await response.json();
         } catch (error) {
             console.error('API request failed:', error);
-            // Fallback to demo data
-            return this.getDemoData(endpoint);
+            throw error;
+        }
+    }
+
+    async tryRefresh() {
+        const refresh = this.getRefreshToken();
+        if (!refresh) return false;
+        try {
+            const resp = await fetch(`${this.baseURL}/api/v1/auth/refresh`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ refresh_token: refresh })
+            });
+            if (!resp.ok) return false;
+            const data = await resp.json();
+            if (data.access_token) localStorage.setItem('risko_access_token', data.access_token);
+            if (data.refresh_token) localStorage.setItem('risko_refresh_token', data.refresh_token);
+            return true;
+        } catch (e) {
+            return false;
         }
     }
 
@@ -977,43 +1024,7 @@ class APIClient {
         return await this.request('/risk/map-data');
     }
 
-    getDemoData(endpoint) {
-        const demoData = {
-            '/risk/analyze': {
-                overall_score: Math.floor(Math.random() * 100),
-                risk_breakdown: {
-                    earthquake: Math.floor(Math.random() * 100),
-                    flood: Math.floor(Math.random() * 100),
-                    fire: Math.floor(Math.random() * 100),
-                    landslide: Math.floor(Math.random() * 100)
-                },
-                recommendations: [
-                    'Bina yapısını güçlendiriniz',
-                    'Acil durum planı hazırlayınız',
-                    'Sigorta kapsamınızı gözden geçiriniz'
-                ]
-            },
-            '/activities/recent': [
-                {
-                    title: 'İstanbul Beyoğlu Risk Analizi',
-                    description: 'Kapsamlı risk analizi tamamlandı',
-                    type: 'analysis',
-                    created_at: new Date(Date.now() - 3600000)
-                }
-            ],
-            '/risk/map-data': [
-                { lat: 41.0082, lng: 28.9784, location: 'İstanbul', risk_level: 75 },
-                { lat: 39.9334, lng: 32.8597, location: 'Ankara', risk_level: 45 },
-                { lat: 38.4192, lng: 27.1287, location: 'İzmir', risk_level: 60 }
-            ]
-        };
-
-        return new Promise(resolve => {
-            setTimeout(() => {
-                resolve(demoData[endpoint] || {});
-            }, 1000);
-        });
-    }
+    // Demo datayı tamamen devre dışı bırakıyoruz
 }
 
 // Initialize app when DOM is loaded

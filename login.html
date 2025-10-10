@@ -22,7 +22,8 @@
 
         body {
             font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #000; /* Tam siyah arkaplan */
+            color: #fff;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -30,13 +31,13 @@
         }
 
         .login-container {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            box-shadow: 0 25px 45px rgba(0,0,0,0.1);
-            padding: 3rem;
+            background: #0a0a0a;
+            border: 1px solid #1f1f1f;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            padding: 2.25rem;
             width: 100%;
-            max-width: 450px;
+            max-width: 440px;
             margin: 2rem;
         }
 
@@ -46,13 +47,13 @@
         }
 
         .login-header h1 {
-            color: #4f46e5;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
+            color: #fff;
+            font-weight: 800;
+            margin-bottom: 0.25rem;
         }
 
         .login-header p {
-            color: #64748b;
+            color: #b3b3b3;
             font-weight: 500;
         }
 
@@ -61,50 +62,59 @@
         }
 
         .form-control {
-            border: 2px solid #e2e8f0;
+            background: #0f0f0f;
+            color: #f5f5f5;
+            border: 1px solid #2a2a2a;
             border-radius: 12px;
-            padding: 1rem;
+            padding: 0.9rem 1rem;
             font-weight: 500;
-            transition: all 0.3s ease;
+            transition: all 0.25s ease;
         }
 
         .form-control:focus {
-            border-color: #4f46e5;
-            box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.25);
+            border-color: #fff;
+            box-shadow: 0 0 0 0.2rem rgba(255,255,255,0.15);
+            background: #121212;
         }
 
+        ::placeholder { color: #9b9b9b; opacity: 1; }
+        :-ms-input-placeholder { color: #9b9b9b; }
+        ::-ms-input-placeholder { color: #9b9b9b; }
+
         .btn-login {
-            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+            background: #ffffff;
+            color: #000;
             border: none;
-            padding: 1rem;
+            padding: 0.9rem 1rem;
             border-radius: 12px;
-            font-weight: 600;
-            font-size: 1.1rem;
-            transition: all 0.3s ease;
+            font-weight: 700;
+            font-size: 1rem;
+            transition: all 0.2s ease;
             width: 100%;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
 
         .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.3);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 25px rgba(255, 255, 255, 0.1);
         }
 
         .demo-login {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            border: none;
+            background: transparent;
+            border: 1px solid #2a2a2a;
             padding: 0.75rem 1.5rem;
             border-radius: 12px;
-            color: white;
+            color: #e6e6e6;
             font-weight: 600;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             width: 100%;
             margin-bottom: 1rem;
         }
 
         .demo-login:hover {
             transform: translateY(-1px);
-            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.3);
+            background: #121212;
+            border-color: #3a3a3a;
         }
 
         .divider {
@@ -120,38 +130,39 @@
             left: 0;
             right: 0;
             height: 1px;
-            background: #e2e8f0;
+            background: #1f1f1f;
         }
 
         .divider span {
-            background: rgba(255, 255, 255, 0.95);
+            background: #0a0a0a;
             padding: 0 1rem;
-            color: #64748b;
+            color: #9b9b9b;
             font-size: 0.9rem;
         }
 
         .features-preview {
             margin-top: 2rem;
             padding-top: 2rem;
-            border-top: 1px solid #e2e8f0;
+            border-top: 1px solid #1f1f1f;
         }
 
         .feature-item {
             display: flex;
             align-items: center;
             margin-bottom: 0.75rem;
-            color: #475569;
+            color: #c9c9c9;
         }
 
         .feature-item i {
-            color: #4f46e5;
+            color: #e6e6e6;
             margin-right: 0.75rem;
             width: 20px;
         }
 
         .github-pages-note {
-            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-            color: white;
+            background: #111;
+            border: 1px solid #1f1f1f;
+            color: #e6e6e6;
             padding: 1rem;
             border-radius: 12px;
             text-align: center;
@@ -169,24 +180,24 @@
 </head>
 <body>
     <div class="login-container">
-        <!-- GitHub Pages Notice -->
+        <!-- Info -->
         <div class="github-pages-note">
-            <i class="fas fa-shield-alt me-2"></i>
-            <strong>Risko</strong><br>
-            Gelişmiş Risk Analizi Platformu
+            <i class="fas fa-circle-info me-2"></i>
+            <strong>Güvenli Giriş</strong><br>
+            Demo modu kapalıdır. Lütfen geçerli bilgilerle giriş yapın.
         </div>
 
         <!-- Login Header -->
         <div class="login-header">
-            <i class="fas fa-shield-alt fa-3x text-primary mb-3"></i>
+            <i class="fas fa-shield-alt fa-3x mb-3" style="color:#e6e6e6"></i>
             <h1>Risko</h1>
             <p>Gelişmiş Risk Analizi Sistemi</p>
         </div>
 
-        <!-- Demo Login Button -->
-        <button class="btn demo-login" onclick="loginDemo()">
-            <i class="fas fa-play me-2"></i>
-            Demo Uygulamayı Başlat
+        <!-- Demo Login Button (disabled) -->
+        <button class="btn demo-login" onclick="loginDemo()" type="button" aria-label="Demo uygulama devre dışı">
+            <i class="fas fa-ban me-2"></i>
+            Demo Modu Kapalı
         </button>
 
         <div class="divider">
@@ -203,10 +214,14 @@
             </div>
 
             <div class="form-floating">
-                <input type="password" class="form-control" id="password" placeholder="Şifre" required>
+                <input type="password" class="form-control" id="password" placeholder="Şifre" minlength="8" required>
                 <label for="password">
                     <i class="fas fa-lock me-2"></i>Şifre
                 </label>
+            </div>
+
+            <div class="d-flex justify-content-end mb-3">
+                <a href="./forgot.html" class="text-decoration-none" style="color:#d0d0d0">Şifremi Unuttum</a>
             </div>
 
             <div class="form-check mb-3">
@@ -224,7 +239,7 @@
 
         <!-- Features Preview -->
         <div class="features-preview">
-            <h6 class="text-center mb-3 text-primary fw-bold">Platform Özellikleri</h6>
+            <h6 class="text-center mb-3 fw-bold" style="color:#e6e6e6">Platform Özellikleri</h6>
             
             <div class="feature-item">
                 <i class="fas fa-chart-line"></i>
@@ -254,119 +269,94 @@
 
         <!-- Footer Links -->
         <div class="text-center mt-4">
-            <a href="#" class="text-decoration-none text-primary me-3">
+            <a href="#" class="text-decoration-none me-3" style="color:#c9c9c9">
                 <i class="fas fa-question-circle me-1"></i>Yardım
             </a>
-            <a href="#" class="text-decoration-none text-primary">
+            <a href="#" class="text-decoration-none" style="color:#c9c9c9">
                 <i class="fas fa-envelope me-1"></i>İletişim
             </a>
+            <div class="mt-3">
+                <span class="text-muted" style="color:#b3b3b3 !important">Hesabın yok mu?</span>
+                <a href="./register.html" class="text-decoration-none fw-semibold" style="color:#fff">Kayıt Ol</a>
+            </div>
         </div>
     </div>
 
     <!-- JavaScript -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js"></script>
+    <script src="./config.js"></script>
     
     <script>
-        // Demo login function
-        function loginDemo() {
-            // Show loading
-            Swal.fire({
-                title: 'Platform Başlatılıyor...',
-                text: 'Risko Platform demo uygulaması yükleniyor',
-                allowOutsideClick: false,
-                showConfirmButton: false,
-                willOpen: () => {
-                    Swal.showLoading()
-                }
-            });
+        const CFG = window.RISKO_CONFIG || { API_BASE_URL: 'http://localhost:8000', DEMO_MODE: false };
 
-            // Simulate loading and redirect to main app
-            setTimeout(() => {
-                window.location.href = './app.html';
-            }, 2000);
+        // Demo login disabled
+        function loginDemo() {
+            Swal.fire({ icon: 'info', title: 'Demo devre dışı', text: 'Bu ortamda demo modu kapalı. Lütfen e-posta ve şifre ile giriş yapın.' });
         }
 
-        // Handle regular login
-        function handleLogin(event) {
+        // Handle regular login (real API)
+        async function handleLogin(event) {
             event.preventDefault();
-            
-            const email = document.getElementById('email').value;
+
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
 
-            // Show loading
             Swal.fire({
                 title: 'Giriş yapılıyor...',
                 text: 'Bilgileriniz kontrol ediliyor',
                 allowOutsideClick: false,
                 showConfirmButton: false,
-                willOpen: () => {
-                    Swal.showLoading()
-                }
+                willOpen: () => Swal.showLoading()
             });
 
-            // Simulate API call
-            setTimeout(() => {
-                if (email && password) {
-                    // Success - redirect to app
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Giriş Başarılı!',
-                        text: 'Risko Platform\'a yönlendiriliyorsunuz...',
-                        timer: 2000,
-                        showConfirmButton: false
-                    }).then(() => {
-                        // Store user data
-                        sessionStorage.setItem('risko_user', JSON.stringify({
-                            email: email,
-                            name: 'Kürşat',
-                            plan: 'owner',
-                            role: 'developer'
-                        }));
-                        
-                        // Redirect to main app
-                        window.location.href = './app.html';
-                    });
-                } else {
-                    // Error
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Giriş Hatası',
-                        text: 'E-posta veya şifre hatalı'
-                    });
+            try {
+                const body = new URLSearchParams();
+                body.append('username', email);
+                body.append('password', password);
+
+                const resp = await fetch(`${CFG.API_BASE_URL}/api/v1/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body
+                });
+
+                if (!resp.ok) {
+                    const errText = await resp.text().catch(()=> '');
+                    throw new Error('Giriş başarısız: ' + errText);
                 }
-            }, 1500);
+
+                const tokens = await resp.json();
+                const access = tokens.access_token;
+                const refresh = tokens.refresh_token;
+
+                localStorage.setItem('risko_access_token', access);
+                localStorage.setItem('risko_refresh_token', refresh || '');
+
+                const meResp = await fetch(`${CFG.API_BASE_URL}/api/v1/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${access}` }
+                });
+                if (!meResp.ok) throw new Error('Kullanıcı bilgisi alınamadı');
+                const me = await meResp.json();
+                sessionStorage.setItem('risko_user', JSON.stringify(me));
+
+                Swal.fire({ icon: 'success', title: 'Giriş Başarılı!', timer: 900, showConfirmButton: false })
+                    .then(() => window.location.href = './app.html');
+            } catch (err) {
+                console.error(err);
+                Swal.fire({ icon: 'error', title: 'Giriş Hatası', text: 'E-posta veya şifre hatalı' });
+            }
         }
 
         // Auto-redirect if already logged in
         if (sessionStorage.getItem('risko_user')) {
-            setTimeout(() => {
-                window.location.href = './app.html';
-            }, 1000);
+            setTimeout(() => { window.location.href = './app.html'; }, 1000);
         }
 
-        // Add some interactive effects
-        document.querySelectorAll('.form-control').forEach(input => {
-            input.addEventListener('focus', () => {
-                input.parentElement.style.transform = 'scale(1.02)';
-            });
-            
-            input.addEventListener('blur', () => {
-                input.parentElement.style.transform = 'scale(1)';
-            });
-        });
-
-        // Feature items hover effect
+        // Hafif etkileşimler (abartılı animasyonlar kaldırıldı)
         document.querySelectorAll('.feature-item').forEach(item => {
-            item.addEventListener('mouseenter', () => {
-                item.style.transform = 'translateX(5px)';
-                item.style.color = '#4f46e5';
-            });
-            
-            item.addEventListener('mouseleave', () => {
-                item.style.transform = 'translateX(0)';
-                item.style.color = '#475569';
-            });
+            item.addEventListener('mouseenter', () => { item.style.transform = 'translateX(4px)'; });
+            item.addEventListener('mouseleave', () => { item.style.transform = 'translateX(0)'; });
         });
     </script>
 </body>

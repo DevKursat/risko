@@ -10,15 +10,15 @@
     --success-color: #10b981;
     --info-color: #3b82f6;
     
-    --bg-primary: #ffffff;
-    --bg-secondary: #f8fafc;
-    --bg-dark: #1e293b;
+    --bg-primary: #0a0a0a;
+    --bg-secondary: #000000;
+    --bg-dark: #0f0f0f;
     
-    --text-primary: #1e293b;
-    --text-secondary: #64748b;
-    --text-muted: #94a3b8;
+    --text-primary: #f5f5f5;
+    --text-secondary: #d0d0d0;
+    --text-muted: #9b9b9b;
     
-    --border-color: #e2e8f0;
+    --border-color: #1f1f1f;
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
@@ -80,7 +80,8 @@ body {
 .navbar {
     box-shadow: var(--shadow-md);
     backdrop-filter: blur(10px);
-    background: linear-gradient(135deg, var(--primary-color) 0%, #6366f1 100%) !important;
+    background: #0f0f0f !important;
+    border-bottom: 1px solid var(--border-color);
 }
 
 .navbar-brand {
@@ -142,11 +143,12 @@ body {
     border-radius: var(--border-radius-lg);
     transition: var(--transition);
     border: 1px solid var(--border-color);
+    background: #0a0a0a;
 }
 
 .card:hover {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
 }
 
 .card-header {
@@ -188,11 +190,13 @@ body {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--primary-color) 0%, #6366f1 100%);
+    background: #ffffff;
+    color: #000;
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #4338ca 0%, #5b21b6 100%);
+    background: #f3f3f3;
+    color: #000;
 }
 
 /* Activity List */
@@ -228,15 +232,18 @@ body {
 /* Forms */
 .form-control {
     border-radius: var(--border-radius);
-    border: 2px solid var(--border-color);
+    border: 1px solid #2a2a2a;
     padding: 0.75rem 1rem;
     transition: var(--transition);
     font-weight: 500;
+    background: #0f0f0f;
+    color: #f5f5f5;
 }
 
 .form-control:focus {
-    border-color: var(--primary-color);
-    box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.25);
+    border-color: #fff;
+    box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.15);
+    background: #121212;
 }
 
 .form-label {
@@ -251,6 +258,7 @@ body {
     border-radius: var(--border-radius-lg);
     overflow: hidden;
     box-shadow: var(--shadow-md);
+    background: #0a0a0a;
 }
 
 /* Charts */

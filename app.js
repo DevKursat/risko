@@ -133,16 +133,28 @@ class RiskoPlatformApp {
         }
     }
 
-    checkAuthentication() {
-        const user = sessionStorage.getItem('risko_user');
-        if (!user && !this.config.DEMO_MODE) {
-            // Redirect to login if not authenticated
+    async checkAuthentication() {
+        const { DEMO_MODE } = this.config;
+        const storedUser = sessionStorage.getItem('risko_user');
+        const token = localStorage.getItem('risko_access_token');
+        if (DEMO_MODE) {
+            if (storedUser) this.user = JSON.parse(storedUser);
+            return;
+        }
+        if (!token) {
             window.location.href = './login.html';
             return;
         }
-        
-        if (user) {
-            this.user = JSON.parse(user);
+        try {
+            const res = await fetch(`${this.config.API_BASE_URL}/api/v1/auth/me`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!res.ok) throw new Error('auth failed');
+            const profile = await res.json();
+            this.user = profile;
+        } catch (e) {
+            localStorage.removeItem('risko_access_token');
+            window.location.href = './login.html';
         }
     }
 
@@ -185,6 +197,15 @@ class RiskoPlatformApp {
         // Navigation
         document.addEventListener('click', (e) => {
             if (e.target.closest('[data-page]')) {
+                e.preventDefault();
+                const page = e.target.closest('[data-page]').getAttribute('data-page');
+                this.navigateToPage(page);
+            }
+        });
+
+        // Keyboard accessibility for clickable cards/links
+        document.addEventListener('keydown', (e) => {
+            if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('[data-page]')) {
                 e.preventDefault();
                 const page = e.target.closest('[data-page]').getAttribute('data-page');
                 this.navigateToPage(page);
@@ -271,6 +292,11 @@ class RiskoPlatformApp {
             // Clear user session
             localStorage.removeItem('risko-user-token');
             localStorage.removeItem('risko-user-data');
+            localStorage.removeItem('risko_access_token');
+            // Inform backend if not in demo
+            if (!this.config.DEMO_MODE) {
+                fetch(`${this.config.API_BASE_URL}/api/v1/auth/logout`, { method: 'POST' }).catch(() => {});
+            }
             
             // Show logout message
             this.showAlert('success', 'Başarıyla çıkış yaptınız.');

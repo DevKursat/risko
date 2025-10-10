@@ -52,12 +52,12 @@ https://[username].github.io/risko/
 ## 🔧 Yapılandırma
 
 ### config.js Dosyası
-- **Demo modu:** GitHub Pages'de otomatik aktif
-- **API URL:** Backend hazır olduğunda değiştirilebilir
-- **Feature flags:** Özellikler açılıp kapatılabilir
+- Demo modu: KAPALI (gerçek API zorunlu)
+- API URL: `localStorage['risko_api_base']` ile ayarlanabilir (ör. canlı domaininiz)
+- Feature flags: Özellikler açılıp kapatılabilir
 
 ### Gelecek İçin Planlama
-1. **Backend API:** Railway/Render/Heroku'ya deploy
+1. **Backend API:** Railway/Render/Heroku/VM'ye deploy edin ve domain belirleyin
 2. **Custom domain:** Opsiyonel profesyonel domain
 3. **Analytics:** Google Analytics entegrasyonu
 

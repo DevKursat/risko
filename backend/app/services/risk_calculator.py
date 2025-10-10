@@ -452,6 +452,8 @@ class RiskCalculationService:
     def calculate_landslide_risk(self, lat: float, lon: float) -> float:
         """Calculate landslide risk using real data sources."""
         return self.get_real_landslide_risk(lat, lon)
+    
+    def calculate_overall_risk(self, earthquake: float, flood: float, fire: float, landslide: float) -> float:
         """Calculate weighted overall risk score."""
         # Weights based on severity and frequency
         weights = {
@@ -460,14 +462,14 @@ class RiskCalculationService:
             'fire': 0.2,
             'landslide': 0.15
         }
-        
+
         overall = (
             earthquake * weights['earthquake'] +
             flood * weights['flood'] +
             fire * weights['fire'] +
             landslide * weights['landslide']
         )
-        
+
         return round(overall, 2)
     
     def get_risk_level(self, score: float) -> str:

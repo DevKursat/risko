@@ -1,4 +1,5 @@
 fastapi
+SQLAlchemy
 psycopg2-binary
 geoalchemy2
 redis
@@ -7,6 +8,8 @@ tensorflow
 pydantic
 pydantic-settings
 python-jose[cryptography]
+passlib[bcrypt]
+email-validator
 pytest
 httpx
 pytest-asyncio
@@ -17,3 +20,4 @@ uvicorn
 starlette
 geopy
 shapely
+python-dotenv
