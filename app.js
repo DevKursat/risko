@@ -77,15 +77,15 @@ class RiskoPlatformApp {
         const particlesContainer = document.createElement('div');
         particlesContainer.className = 'particles-container';
         
-        // Create particles
-        for (let i = 0; i < 15; i++) {
+        // Create fewer, more subtle particles
+        for (let i = 0; i < 8; i++) {
             const particle = document.createElement('div');
             particle.className = 'particle';
             
-            // Random positioning
+            // Random positioning and timing
             particle.style.left = Math.random() * 100 + '%';
-            particle.style.animationDelay = Math.random() * 15 + 's';
-            particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+            particle.style.animationDelay = Math.random() * 20 + 's';
+            particle.style.animationDuration = (20 + Math.random() * 15) + 's';
             
             particlesContainer.appendChild(particle);
         }
@@ -96,8 +96,8 @@ class RiskoPlatformApp {
     updateParticleColors() {
         const particles = document.querySelectorAll('.particle');
         const colors = this.currentTheme === 'dark' 
-            ? ['rgba(59, 130, 246, 0.4)', 'rgba(16, 185, 129, 0.4)', 'rgba(139, 92, 246, 0.4)']
-            : ['rgba(37, 99, 235, 0.3)', 'rgba(5, 150, 105, 0.3)', 'rgba(8, 145, 178, 0.3)'];
+            ? ['rgba(59, 130, 246, 0.3)', 'rgba(16, 185, 129, 0.2)', 'rgba(139, 92, 246, 0.25)']
+            : ['rgba(37, 99, 235, 0.2)', 'rgba(5, 150, 105, 0.15)', 'rgba(8, 145, 178, 0.2)'];
         
         particles.forEach((particle, index) => {
             particle.style.background = colors[index % colors.length];
@@ -1073,35 +1073,20 @@ Ankara Çankaya
 
     async loadReports() {
         try {
-            // Mock report data - gerçek uygulamada API'den gelecek
-            const reports = [
-                {
-                    id: 1,
-                    date: '2024-01-15',
-                    location: 'İstanbul, Beşiktaş',
-                    riskScore: 7.2,
-                    riskLevel: 'high',
-                    risks: ['Deprem', 'Sel', 'Yangın']
-                },
-                {
-                    id: 2,
-                    date: '2024-01-10',
-                    location: 'Ankara, Çankaya',
-                    riskScore: 4.5,
-                    riskLevel: 'medium',
-                    risks: ['Deprem', 'Kuraklık']
-                },
-                {
-                    id: 3,
-                    date: '2024-01-05',
-                    location: 'İzmir, Konak',
-                    riskScore: 3.1,
-                    riskLevel: 'low',
-                    risks: ['Deprem']
-                }
-            ];
+            console.log('📊 Raporlar yükleniyor...');
+            
+            // Gerçek API çağrısı deneyelim, yoksa demo data kullan
+            let reports;
+            try {
+                reports = await this.apiClient.getReports();
+            } catch (apiError) {
+                console.warn('API hatası, demo veriler kullanılıyor:', apiError);
+                reports = this.generateDemoReports();
+            }
 
             this.displayReports(reports);
+            this.setupReportsFilters();
+            
         } catch (error) {
             console.error('Raporlar yüklenirken hata:', error);
             const container = document.getElementById('reports-list');
@@ -1111,47 +1096,287 @@ Ankara Çankaya
         }
     }
 
+    generateDemoReports() {
+        const locations = [
+            'İstanbul, Beyoğlu', 'Ankara, Çankaya', 'İzmir, Konak', 'Bursa, Osmangazi',
+            'Antalya, Muratpaşa', 'Adana, Seyhan', 'Gaziantep, Şahinbey', 'Konya, Selçuklu',
+            'Mersin, Yenişehir', 'Diyarbakır, Kayapınar', 'Kayseri, Melikgazi', 'Eskişehir, Odunpazarı'
+        ];
+        
+        const riskTypes = [
+            ['Deprem', 'Sel'], ['Deprem', 'Yangın'], ['Deprem', 'Heyelan'],
+            ['Sel', 'Taşkın'], ['Yangın', 'Kuraklık'], ['Deprem'],
+            ['Hava Durumu', 'Sel'], ['Deprem', 'Yangın', 'Sel']
+        ];
+
+        return Array.from({length: 15}, (_, i) => {
+            const riskScore = (Math.random() * 8 + 1).toFixed(1);
+            const riskLevel = riskScore > 7 ? 'high' : riskScore > 4 ? 'medium' : 'low';
+            const date = new Date();
+            date.setDate(date.getDate() - Math.floor(Math.random() * 30));
+            
+            return {
+                id: i + 1,
+                date: date.toISOString().split('T')[0],
+                location: locations[Math.floor(Math.random() * locations.length)],
+                riskScore: parseFloat(riskScore),
+                riskLevel: riskLevel,
+                risks: riskTypes[Math.floor(Math.random() * riskTypes.length)],
+                analysisType: Math.random() > 0.7 ? 'premium' : 'standard',
+                created_at: date.toISOString()
+            };
+        }).sort((a, b) => new Date(b.date) - new Date(a.date));
+    }
+
+    setupReportsFilters() {
+        // Filter functionality
+        const filterBtn = document.querySelector('#reports-list').closest('.card').querySelector('[onclick="app.filterReports()"]');
+        if (filterBtn) {
+            filterBtn.onclick = () => this.filterReports();
+        }
+        
+        // Export functionality
+        const pdfBtn = document.querySelector('[onclick="app.exportReports(\'pdf\')"]');
+        const excelBtn = document.querySelector('[onclick="app.exportReports(\'excel\')"]');
+        
+        if (pdfBtn) pdfBtn.onclick = () => this.exportReports('pdf');
+        if (excelBtn) excelBtn.onclick = () => this.exportReports('excel');
+    }
+
+    filterReports() {
+        const filterValue = document.getElementById('report-filter')?.value || 'all';
+        const dateFrom = document.getElementById('date-from')?.value;
+        const dateTo = document.getElementById('date-to')?.value;
+        
+        console.log('🔍 Raporlar filtreleniyor:', { filterValue, dateFrom, dateTo });
+        
+        // Simulated filtering - in real app, this would make API call
+        let filteredReports = this.generateDemoReports();
+        
+        if (filterValue !== 'all') {
+            filteredReports = filteredReports.filter(report => report.riskLevel === filterValue);
+        }
+        
+        if (dateFrom) {
+            filteredReports = filteredReports.filter(report => report.date >= dateFrom);
+        }
+        
+        if (dateTo) {
+            filteredReports = filteredReports.filter(report => report.date <= dateTo);
+        }
+        
+        this.displayReports(filteredReports);
+        this.showNotification(`${filteredReports.length} rapor filtrelendi`, 'success');
+    }
+
+    exportReports(format) {
+        console.log(`📄 Raporlar ${format.toUpperCase()} formatında export ediliyor...`);
+        
+        // Simulated export
+        const reports = this.generateDemoReports();
+        
+        if (format === 'pdf') {
+            this.generatePDFReport(reports);
+        } else if (format === 'excel') {
+            this.generateExcelReport(reports);
+        }
+        
+        this.showNotification(`Raporlar ${format.toUpperCase()} olarak indirildi`, 'success');
+    }
+
+    generatePDFReport(reports) {
+        // PDF generation simulation
+        const pdfContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Risko Platform - Risk Analizi Raporları</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    .header { text-align: center; margin-bottom: 30px; }
+                    .report-item { margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; }
+                    .risk-high { color: #dc3545; }
+                    .risk-medium { color: #ffc107; }
+                    .risk-low { color: #28a745; }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>Risk Analizi Raporları</h1>
+                    <p>Oluşturulma Tarihi: ${new Date().toLocaleDateString('tr-TR')}</p>
+                </div>
+                ${reports.map(report => `
+                    <div class="report-item">
+                        <h3>${report.location}</h3>
+                        <p><strong>Tarih:</strong> ${report.date}</p>
+                        <p><strong>Risk Skoru:</strong> <span class="risk-${report.riskLevel}">${report.riskScore}</span></p>
+                        <p><strong>Risk Türleri:</strong> ${report.risks.join(', ')}</p>
+                    </div>
+                `).join('')}
+            </body>
+            </html>
+        `;
+        
+        // Create downloadable PDF simulation
+        const blob = new Blob([pdfContent], { type: 'text/html' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `risko-raporlari-${new Date().toISOString().split('T')[0]}.html`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    }
+
+    generateExcelReport(reports) {
+        // Excel generation simulation
+        const csvContent = [
+            'Tarih,Konum,Risk Skoru,Risk Seviyesi,Risk Türleri',
+            ...reports.map(report => 
+                `${report.date},"${report.location}",${report.riskScore},${report.riskLevel},"${report.risks.join(', ')}"`
+            )
+        ].join('\n');
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `risko-raporlari-${new Date().toISOString().split('T')[0]}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+    }
+
     displayReports(reports) {
         const container = document.getElementById('reports-list');
         if (!container) return;
 
         if (reports.length === 0) {
-            container.innerHTML = '<div class="alert alert-info">Henüz rapor bulunmuyor.</div>';
+            container.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="fas fa-chart-line fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">Henüz rapor bulunmuyor</h5>
+                    <p class="text-muted">Risk analizi yaparak raporlarınızı görüntüleyebilirsiniz.</p>
+                    <button class="btn btn-primary" onclick="app.navigateToPage('analysis')">
+                        <i class="fas fa-plus me-2"></i>Yeni Analiz Yap
+                    </button>
+                </div>
+            `;
             return;
         }
 
-        const reportsHtml = reports.map(report => `
-            <div class="card mb-3 border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="row align-items-center">
-                        <div class="col-md-3">
-                            <small class="text-muted">${report.date}</small>
-                            <h6 class="mb-1">${report.location}</h6>
-                        </div>
-                        <div class="col-md-2 text-center">
-                            <div class="risk-score-circle risk-${report.riskLevel}">
-                                ${report.riskScore}
+        const reportsHtml = reports.map(report => {
+            const riskColor = {
+                'high': 'danger',
+                'medium': 'warning', 
+                'low': 'success'
+            }[report.riskLevel] || 'secondary';
+            
+            const riskText = {
+                'high': 'Yüksek Risk',
+                'medium': 'Orta Risk',
+                'low': 'Düşük Risk'
+            }[report.riskLevel] || 'Bilinmeyen';
+
+            return `
+                <div class="card mb-3 border-0 shadow-sm hover-card">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="fas fa-calendar text-primary me-2"></i>
+                                    <small class="text-muted">${new Date(report.date).toLocaleDateString('tr-TR')}</small>
+                                </div>
+                                <h6 class="mb-1 fw-bold">
+                                    <i class="fas fa-map-marker-alt text-danger me-1"></i>
+                                    ${report.location}
+                                </h6>
+                                ${report.analysisType === 'premium' ? '<span class="badge bg-warning text-dark">Premium</span>' : ''}
                             </div>
-                        </div>
-                        <div class="col-md-4">
-                            <div class="risk-badges">
-                                ${report.risks.map(risk => `<span class="badge bg-secondary me-1">${risk}</span>`).join('')}
+                            <div class="col-md-2 text-center">
+                                <div class="risk-score-display">
+                                    <div class="risk-score-circle-small bg-${riskColor} text-white mb-1">
+                                        ${report.riskScore}
+                                    </div>
+                                    <small class="text-${riskColor} fw-bold">${riskText}</small>
+                                </div>
                             </div>
-                        </div>
-                        <div class="col-md-3 text-end">
-                            <button class="btn btn-sm btn-outline-primary me-1" onclick="app.viewReport(${report.id})">
-                                <i class="fas fa-eye"></i> Görüntüle
-                            </button>
-                            <button class="btn btn-sm btn-outline-success" onclick="app.downloadReport(${report.id})">
-                                <i class="fas fa-download"></i>
-                            </button>
+                            <div class="col-md-4">
+                                <div class="risk-badges">
+                                    <small class="text-muted d-block mb-1">Risk Türleri:</small>
+                                    ${report.risks.map(risk => {
+                                        const riskIcon = {
+                                            'Deprem': 'fa-mountain',
+                                            'Sel': 'fa-water',
+                                            'Yangın': 'fa-fire',
+                                            'Heyelan': 'fa-hill-rockslide',
+                                            'Taşkın': 'fa-water',
+                                            'Kuraklık': 'fa-sun',
+                                            'Hava Durumu': 'fa-cloud'
+                                        }[risk] || 'fa-exclamation-triangle';
+                                        
+                                        return `<span class="badge bg-light text-dark me-1 mb-1">
+                                            <i class="fas ${riskIcon} me-1"></i>${risk}
+                                        </span>`;
+                                    }).join('')}
+                                </div>
+                            </div>
+                            <div class="col-md-3 text-end">
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="app.viewReport(${report.id})" title="Detayları Görüntüle">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-success" onclick="app.downloadSingleReport(${report.id})" title="Raporu İndir">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-info" onclick="app.shareReport(${report.id})" title="Paylaş">
+                                        <i class="fas fa-share"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
 
         container.innerHTML = reportsHtml;
+    }
+
+    viewReport(reportId) {
+        console.log(`👁️ Rapor ${reportId} görüntüleniyor...`);
+        this.showNotification('Rapor detayları açılıyor...', 'info');
+        
+        // Simulate opening report details
+        setTimeout(() => {
+            this.showNotification(`Rapor #${reportId} başarıyla açıldı`, 'success');
+        }, 1000);
+    }
+
+    downloadSingleReport(reportId) {
+        console.log(`📄 Rapor ${reportId} indiriliyor...`);
+        this.showNotification(`Rapor #${reportId} indiriliyor...`, 'info');
+        
+        // Simulate download
+        setTimeout(() => {
+            this.showNotification(`Rapor #${reportId} başarıyla indirildi`, 'success');
+        }, 1500);
+    }
+
+    shareReport(reportId) {
+        console.log(`📤 Rapor ${reportId} paylaşılıyor...`);
+        
+        if (navigator.share) {
+            navigator.share({
+                title: 'Risko Platform - Risk Analizi Raporu',
+                text: `Risk analizi raporu #${reportId}`,
+                url: window.location.href
+            });
+        } else {
+            // Fallback to clipboard
+            const shareUrl = `${window.location.origin}/report/${reportId}`;
+            navigator.clipboard.writeText(shareUrl).then(() => {
+                this.showNotification('Rapor linki panoya kopyalandı!', 'success');
+            });
+        }
     }
 
     filterReports() {
@@ -2094,13 +2319,26 @@ Ankara Çankaya
             const activities = await this.apiClient.getRecentActivities();
             this.displayRecentActivities(activities);
             
-            // Update stats
-            this.updateDashboardStats();
+            // Load dashboard stats
+            const stats = await this.apiClient.getDashboardStats();
+            this.displayDashboardStats(stats);
             
         } catch (error) {
             console.error('Dashboard data loading error:', error);
             // Use demo data
             this.loadDemoData();
+            this.updateDashboardStats(); // Use default stats
+        }
+    }
+
+    displayDashboardStats(stats) {
+        if (stats) {
+            this.animateCounter('total-analyses', stats.total || 15420);
+            this.animateCounter('low-risk-count', stats.low || 8943);
+            this.animateCounter('medium-risk-count', stats.medium || 4235);
+            this.animateCounter('high-risk-count', stats.high || 2242);
+        } else {
+            this.updateDashboardStats();
         }
     }
 
@@ -3630,6 +3868,10 @@ class APIClient {
 
     async getRiskMapData() {
         return await this.request('/risk/map-data');
+    }
+
+    async getReports() {
+        return await this.request('/reports');
     }
 
     getDemoData(endpoint) {
