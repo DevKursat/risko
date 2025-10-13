@@ -85,13 +85,23 @@
             Swal.fire({ title: 'Hesap oluşturuluyor...', allowOutsideClick: false, showConfirmButton: false, didOpen: () => Swal.showLoading() });
 
             try {
-                // Register then auto-login to obtain session
+                // Register then try to auto-login. If email confirmation is required, inform the user.
                 await window.RiskoAuth.register(name, email, password);
-                const login = await window.RiskoAuth.login(email, password).catch(()=>null);
-                if (login?.session?.access_token) {
-                    localStorage.setItem('risko_access_token', login.session.access_token);
-                    localStorage.setItem('risko_refresh_token', login.session.refresh_token || '');
-                    sessionStorage.setItem('risko_user', JSON.stringify(login.user || {}));
+                try {
+                    const login = await window.RiskoAuth.login(email, password);
+                    if (login?.session?.access_token) {
+                        localStorage.setItem('risko_access_token', login.session.access_token);
+                        localStorage.setItem('risko_refresh_token', login.session.refresh_token || '');
+                        sessionStorage.setItem('risko_user', JSON.stringify(login.user || {}));
+                    }
+                } catch (loginErr) {
+                    // If Supabase responds with email confirmation required, show clear message
+                    const msg = (loginErr && loginErr.message) ? loginErr.message : '';
+                    if (msg.toLowerCase().includes('email not confirmed') || msg.toLowerCase().includes('confirm')) {
+                        Swal.fire({ icon: 'info', title: 'E-posta doğrulaması gerekli', text: 'Kayıt başarılı — lütfen e-postanıza gönderilen doğrulama bağlantısına tıklayın. Doğruladıktan sonra giriş yapabilirsiniz.' }).then(() => window.location.href = './login.html');
+                        return;
+                    }
+                    console.error('Login after register failed:', loginErr);
                 }
                 Swal.fire({ icon: 'success', title: 'Kayıt başarılı', text: 'Uygulamaya yönlendiriliyorsunuz...', timer: 1000, showConfirmButton: false })
                 .then(() => window.location.href = './app.html');
