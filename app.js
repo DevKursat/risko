@@ -3268,36 +3268,58 @@ class APIClient {
         console.log('🔍 AFAD gerçek verilerini çekiliyor...');
         
         try {
-            // 1. AFAD Deprem Verileri (Gerçek API)
-            const earthquakeResponse = await fetch('https://deprem.afad.gov.tr/apiv2/event/filter', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    sw: `${location.lat - 1},${location.lng - 1}`,
-                    ne: `${location.lat + 1},${location.lng + 1}`,
-                    start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Son 30 gün
-                    end: new Date().toISOString().split('T')[0]
-                })
-            });
-            
-            if (earthquakeResponse.ok) {
-                const earthquakeData = await earthquakeResponse.json();
-                console.log('✅ AFAD gerçek deprem verisi alındı:', earthquakeData.length, 'deprem');
-                return this.processRealAFADData(earthquakeData, location);
+            // Prefer server-side proxy to avoid CORS issues when deployed
+            if (this.apiClient && this.apiClient.baseURL) {
+                const proxyUrl = `${this.apiClient.baseURL}/api/v1/proxy/afad/events?limit=100`;
+                const proxyResp = await fetch(proxyUrl);
+                if (proxyResp.ok) {
+                    const earthquakeData = await proxyResp.json();
+                    console.log('✅ AFAD gerçek deprem verisi alındı (proxy):', earthquakeData.length || 0, 'deprem');
+                    return this.processRealAFADData(earthquakeData, location);
+                }
+            } else {
+                // 1. AFAD Deprem Verileri (Gerçek API direct fetch for local dev)
+                const earthquakeResponse = await fetch('https://deprem.afad.gov.tr/apiv2/event/filter', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        sw: `${location.lat - 1},${location.lng - 1}`,
+                        ne: `${location.lat + 1},${location.lng + 1}`,
+                        start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Son 30 gün
+                        end: new Date().toISOString().split('T')[0]
+                    })
+                });
+                
+                if (earthquakeResponse.ok) {
+                    const earthquakeData = await earthquakeResponse.json();
+                    console.log('✅ AFAD gerçek deprem verisi alındı:', earthquakeData.length, 'deprem');
+                    return this.processRealAFADData(earthquakeData, location);
+                }
             }
         } catch (error) {
             console.warn('⚠️ AFAD API hatası, alternatif kaynaklar deneniyor:', error);
         }
 
         try {
-            // 2. Kandilli Rasathanesi Alternatif API
-            const kandilliResponse = await fetch(`http://api.orhanaydogdu.com.tr/deprem/kandilli/live`);
-            if (kandilliResponse.ok) {
-                const kandilliData = await kandilliResponse.json();
-                console.log('✅ Kandilli gerçek verisi alındı');
-                return this.processKandilliData(kandilliData.result, location);
+            // Kandilli via proxy if available
+            if (this.apiClient && this.apiClient.baseURL) {
+                const kandilliProxy = `${this.apiClient.baseURL}/api/v1/proxy/kandilli/recent`;
+                const kandResp = await fetch(kandilliProxy);
+                if (kandResp.ok) {
+                    const kandilliData = await kandResp.json();
+                    console.log('✅ Kandilli gerçek verisi alındı (proxy)');
+                    return this.processKandilliData(kandilliData.result || kandilliData, location);
+                }
+            } else {
+                // 2. Kandilli Rasathanesi Alternatif API (direct)
+                const kandilliResponse = await fetch(`http://api.orhanaydogdu.com.tr/deprem/kandilli/live`);
+                if (kandilliResponse.ok) {
+                    const kandilliData = await kandilliResponse.json();
+                    console.log('✅ Kandilli gerçek verisi alındı');
+                    return this.processKandilliData(kandilliData.result, location);
+                }
             }
         } catch (error) {
             console.warn('⚠️ Kandilli API hatası:', error);
@@ -3412,17 +3434,27 @@ class APIClient {
         console.log('🌦️ MGM gerçek hava durumu verilerini çekiliyor...');
         
         try {
-            // 1. OpenWeatherMap API (Gerçek global hava durumu)
-            const openWeatherAPI = `https://api.openweathermap.org/data/2.5/weather?lat=${location.lat}&lon=${location.lng}&appid=demo_key&units=metric&lang=tr`;
-            const weatherResponse = await fetch(openWeatherAPI);
-            
-            if (weatherResponse.ok) {
-                const weatherData = await weatherResponse.json();
-                console.log('✅ OpenWeather gerçek hava durumu alındı');
-                return this.processRealWeatherData(weatherData, location);
+            // Prefer server-side proxy for weather to use configured API keys and avoid CORS
+            if (this.apiClient && this.apiClient.baseURL) {
+                const weatherProxy = `${this.apiClient.baseURL}/api/v1/proxy/weather?lat=${location.lat}&lon=${location.lng}`;
+                const weatherResp = await fetch(weatherProxy);
+                if (weatherResp.ok) {
+                    const weatherData = await weatherResp.json();
+                    console.log('✅ Weather data received via proxy');
+                    return this.processRealWeatherData(weatherData, location);
+                }
+            } else {
+                // 1. OpenWeatherMap API (direct, local dev)
+                const openWeatherAPI = `https://api.openweathermap.org/data/2.5/weather?lat=${location.lat}&lon=${location.lng}&appid=demo_key&units=metric&lang=tr`;
+                const weatherResponse = await fetch(openWeatherAPI);
+                if (weatherResponse.ok) {
+                    const weatherData = await weatherResponse.json();
+                    console.log('✅ OpenWeather gerçek hava durumu alındı');
+                    return this.processRealWeatherData(weatherData, location);
+                }
             }
         } catch (error) {
-            console.warn('⚠️ OpenWeather API hatası:', error);
+            console.warn('⚠️ Weather API hatası:', error);
         }
 
         try {
