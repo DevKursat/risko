@@ -72,7 +72,11 @@
       await init();
       if (!state.enabled) throw new Error('Supabase not enabled');
       const { data, error } = await state.client.auth.signInWithPassword({ email, password });
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase login error:', error);
+        const msg = (error.status ? `${error.status} ` : '') + (error.message || JSON.stringify(error));
+        throw new Error(msg);
+      }
       return data;
     },
     async register(name, email, password){
@@ -83,7 +87,11 @@
         password,
         options: { data: { name } }
       });
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase register error:', error);
+        const msg = (error.status ? `${error.status} ` : '') + (error.message || JSON.stringify(error));
+        throw new Error(msg);
+      }
       return data;
     },
     async requestPasswordReset(email, redirectTo){
