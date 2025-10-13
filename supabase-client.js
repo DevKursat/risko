@@ -8,20 +8,36 @@
   };
 
   async function fetchAuthConfig(){
-      // Prefer configuration passed from the page (window.RISKO_CONFIG).
-      // For GitHub Pages, set RISKO_CONFIG in `config.js` to include supabase_url and supabase_anon_key.
-      const pageCfg = (window.RISKO_CONFIG && typeof window.RISKO_CONFIG === 'object') ? window.RISKO_CONFIG : {};
-      if (pageCfg.auth_provider === 'supabase' && pageCfg.supabase_url && pageCfg.supabase_anon_key) {
-        return {
-          auth_provider: 'supabase',
-          supabase_url: pageCfg.supabase_url,
-          supabase_anon_key: pageCfg.supabase_anon_key,
-        };
-      }
+    // Prefer configuration passed from the page (window.RISKO_CONFIG).
+    // For GitHub Pages, set RISKO_CONFIG in `config.js` to include supabase_url and supabase_anon_key.
+    const pageCfg = (window.RISKO_CONFIG && typeof window.RISKO_CONFIG === 'object') ? window.RISKO_CONFIG : {};
+    if (pageCfg.auth_provider === 'supabase' && pageCfg.supabase_url && pageCfg.supabase_anon_key) {
+      return {
+        auth_provider: 'supabase',
+        supabase_url: pageCfg.supabase_url,
+        supabase_anon_key: pageCfg.supabase_anon_key,
+      };
+    }
 
-      // No public config found. Do not return a secret from the repo.
-      console.warn('Supabase configuration not found in window.RISKO_CONFIG; Supabase auth disabled for safety.');
-      return null;
+    // Fallback: try to fetch config.js directly (cache-busted) and parse values.
+    try {
+      const resp = await fetch('./config.js?_=' + Date.now(), { cache: 'no-store' });
+      if (resp.ok) {
+        const txt = await resp.text();
+        const urlMatch = txt.match(/supabase_url\s*:\s*['"]([^'"]+)['"]/);
+        const keyMatch = txt.match(/supabase_anon_key\s*:\s*['"]([^'"]+)['"]/);
+        const providerMatch = txt.match(/auth_provider\s*:\s*['"]([^'"]+)['"]/);
+        if (providerMatch && providerMatch[1] === 'supabase' && urlMatch && keyMatch) {
+          return { auth_provider: 'supabase', supabase_url: urlMatch[1], supabase_anon_key: keyMatch[1] };
+        }
+      }
+    } catch (e) {
+      // ignore fetch errors
+    }
+
+    // No public config found. Do not return a secret from the repo.
+    console.warn('Supabase configuration not found in window.RISKO_CONFIG; Supabase auth disabled for safety.');
+    return null;
   }
 
   async function exchangeFromUrl(client){
