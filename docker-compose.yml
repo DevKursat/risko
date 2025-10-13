@@ -12,6 +12,9 @@ services:
     env_file:
       - .env
     restart: unless-stopped
+    environment:
+      - PYTHONPATH=/app
+      - APPLY_MIGRATIONS=false
     # If you want to mount code for live reload in dev, uncomment below and adjust
     # volumes:
     #   - ./backend:/app
