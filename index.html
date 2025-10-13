@@ -61,7 +61,7 @@
       // Hook login form to update nav and load history after successful login
       const loginForm = document.getElementById('login-form'); if(loginForm){ loginForm.addEventListener('submit', async function(ev){ ev.preventDefault(); const email = document.getElementById('login-email').value; const pw = document.getElementById('login-password').value; try{ await ensureAuth(); await window.RiskoAuth.login(email,pw); await updateNav(); show('panel'); window.location.hash='panel'; await loadHistory(); alert('Giriş başarılı'); }catch(err){ alert('Giriş başarısız: ' + (err.message||err)); } }); }
 
-      const regForm = document.getElementById('register-form'); if(regForm){ regForm.addEventListener('submit', async function(ev){ ev.preventDefault(); const name = document.getElementById('reg-name').value; const email = document.getElementById('reg-email').value; const pw = document.getElementById('reg-password').value; try{ await ensureAuth(); await window.RiskoAuth.register(name,email,pw); alert('Kayıt başarılı, e-postanızı doğrulayın'); show('login'); window.location.hash='login'; }catch(err){ alert('Kayıt başarısız: ' + (err.message||err)); } }); }
+  // register-form listener is defined later (single source of truth)
 
       // Logout button
       const logoutBtn = document.getElementById('logout'); if(logoutBtn){ logoutBtn.addEventListener('click', async function(){ try{ if(window.supabase && window.supabase.auth && typeof window.supabase.auth.signOut === 'function'){ await window.supabase.auth.signOut(); } else if(window.RiskoAuth && typeof window.RiskoAuth.signOut === 'function'){ await window.RiskoAuth.signOut(); } }catch(e){} await updateNav(); show('login'); window.location.hash='login'; }); }
@@ -175,26 +175,29 @@
 
         <!-- Auth -->
         <section id="auth" class="mt-16 grid md:grid-cols-2 gap-6">
+          <!-- Simplified login: only title, email/password and submit -->
           <div id="login" class="bg-white p-6 rounded shadow">
             <h3 class="text-lg font-semibold">Giriş Yap</h3>
             <form id="login-form" class="mt-4 space-y-3">
-              <input id="login-email" class="w-full border rounded px-3 py-2" placeholder="E-posta">
-              <input id="login-password" type="password" class="w-full border rounded px-3 py-2" placeholder="Parola">
+              <input id="login-email" class="w-full border rounded px-3 py-2 bg-slate-700 text-white placeholder-gray-400 border-slate-600 focus:outline-none focus:ring-2 focus:ring-accent" placeholder="E-posta">
+              <input id="login-password" type="password" class="w-full border rounded px-3 py-2 bg-slate-700 text-white placeholder-gray-400 border-slate-600 focus:outline-none focus:ring-2 focus:ring-accent" placeholder="Parola">
               <div class="flex items-center justify-between">
                 <button class="px-4 py-2 bg-accent text-white rounded" type="submit">Giriş Yap</button>
                 <a href="#register" class="text-sm text-slate-600">Hesap Oluştur</a>
               </div>
             </form>
           </div>
+
           <div id="register" class="bg-white p-6 rounded shadow">
             <h3 class="text-lg font-semibold">Kayıt Ol</h3>
             <form id="register-form" class="mt-4 space-y-3">
-              <input id="reg-name" class="w-full border rounded px-3 py-2" placeholder="Adınız">
-              <input id="reg-email" class="w-full border rounded px-3 py-2" placeholder="E-posta">
-              <input id="reg-password" type="password" class="w-full border rounded px-3 py-2" placeholder="Parola">
+              <input id="reg-name" class="w-full border rounded px-3 py-2 bg-slate-700 text-white placeholder-gray-400 border-slate-600 focus:outline-none focus:ring-2 focus:ring-accent" placeholder="Adınız">
+              <input id="reg-email" class="w-full border rounded px-3 py-2 bg-slate-700 text-white placeholder-gray-400 border-slate-600 focus:outline-none focus:ring-2 focus:ring-accent" placeholder="E-posta">
+              <input id="reg-password" type="password" class="w-full border rounded px-3 py-2 bg-slate-700 text-white placeholder-gray-400 border-slate-600 focus:outline-none focus:ring-2 focus:ring-accent" placeholder="Parola">
               <div class="flex items-center justify-between">
                 <button class="px-4 py-2 bg-accent text-white rounded" type="submit">Hesap Oluştur</button>
               </div>
+              <div id="register-message" class="mt-2 text-sm"></div>
             </form>
           </div>
         </section>
@@ -402,7 +405,25 @@
   });
   document.getElementById('register-form').addEventListener('submit', async (e)=>{ e.preventDefault();
     const name = document.getElementById('reg-name').value; const email = document.getElementById('reg-email').value; const pw = document.getElementById('reg-password').value;
-    try{ await window.RiskoAuth.init(); await window.RiskoAuth.register(name,email,pw); alert('Kayıt başarılı, lütfen e-postanızı doğrulayın'); }catch(err){ alert('Kayıt başarısız: ' + (err.message||err)); }
+    const msgEl = document.getElementById('register-message');
+    msgEl.innerText = '';
+    try{
+      await window.RiskoAuth.init();
+      const res = await window.RiskoAuth.register(name,email,pw);
+      // Show success message
+      msgEl.className = 'mt-2 text-sm text-green-600';
+      msgEl.innerText = 'Kayıt başarılı! Lütfen e-postanızı doğrulayın ve giriş yapın.';
+      // Optionally clear form
+      document.getElementById('reg-name').value = '';
+      document.getElementById('reg-email').value = '';
+      document.getElementById('reg-password').value = '';
+      // switch to login view after short delay
+      setTimeout(()=>{ show('login'); window.location.hash='login'; }, 1400);
+    }catch(err){
+      const msg = err?.message || (err?.error && err.error.message) || JSON.stringify(err);
+      msgEl.className = 'mt-2 text-sm text-red-600';
+      msgEl.innerText = 'Kayıt başarısız: ' + msg;
+    }
   });
 
   // Nav login state (toggle) - naive approach
