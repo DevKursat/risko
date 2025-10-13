@@ -316,14 +316,14 @@
             try {
                 // Supabase Auth mode
                 if (window.RiskoAuth && await window.RiskoAuth.init() && window.RiskoAuth.enabled) {
-                    await window.RiskoAuth.login(email, password);
-                    const access = await window.RiskoAuth.getToken();
+                    const res = await window.RiskoAuth.login(email, password);
+                    const access = res?.session?.access_token;
+                    const refresh = res?.session?.refresh_token || '';
                     if (!access) throw new Error('Token alınamadı');
                     localStorage.setItem('risko_access_token', access);
-                    const meResp = await fetch(`${CFG.API_BASE_URL}/api/v1/auth/me`, { headers: { 'Authorization': `Bearer ${access}` } });
-                    if (!meResp.ok) throw new Error('Kullanıcı bilgisi alınamadı');
-                    const me = await meResp.json();
-                    sessionStorage.setItem('risko_user', JSON.stringify(me));
+                    localStorage.setItem('risko_refresh_token', refresh);
+                    // Use Supabase user object
+                    sessionStorage.setItem('risko_user', JSON.stringify(res.user || {}));
                     Swal.fire({ icon: 'success', title: 'Giriş Başarılı!', timer: 900, showConfirmButton: false })
                         .then(() => window.location.href = './app.html');
                     return;

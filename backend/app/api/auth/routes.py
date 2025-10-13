@@ -100,6 +100,33 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     return UserPublic.model_validate(created)
 
 
+class AdminCreateUser(BaseModel):
+    name: str
+    email: EmailStr
+    password: str
+
+
+@router.post("/admin/register", response_model=UserPublic)
+def admin_register(user: AdminCreateUser):
+    # Only allow when service role key is configured
+    if not settings.SUPABASE_SERVICE_ROLE_KEY:
+        raise HTTPException(status_code=403, detail="Admin registration disabled")
+    # Call Supabase Admin API to create a user without confirmation
+    import requests
+    url = f"{settings.SUPABASE_URL}/auth/v1/admin/users"
+    headers = {
+        "apikey": settings.SUPABASE_SERVICE_ROLE_KEY,
+        "Authorization": f"Bearer {settings.SUPABASE_SERVICE_ROLE_KEY}",
+        "Content-Type": "application/json"
+    }
+    payload = {"email": user.email, "password": user.password, "email_confirm": True, "user_metadata": {"name": user.name}}
+    r = requests.post(url, headers=headers, json=payload, timeout=10)
+    if r.status_code not in (200, 201):
+        raise HTTPException(status_code=500, detail=f"Supabase admin create failed: {r.text}")
+    data = r.json()
+    return UserPublic(id=0, name=data.get('user_metadata', {}).get('name') or user.name, email=data.get('email'))
+
+
 @router.post("/login", response_model=Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     if settings.AUTH_PROVIDER == "supabase":

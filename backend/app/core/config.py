@@ -51,6 +51,8 @@ class Settings(BaseSettings):
     # Supabase settings (for auth + client usage)
     SUPABASE_URL: Optional[str] = None
     SUPABASE_ANON_KEY: Optional[str] = None
+    # Supabase service role (ADMIN) key - keep this secret (do NOT commit to public repos)
+    SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
     # JWT verify settings for Supabase (RS256)
     SUPABASE_JWT_ALG: str = "RS256"
     SUPABASE_JWKS_URL: Optional[str] = None

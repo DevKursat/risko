@@ -8,12 +8,20 @@
   };
 
   async function fetchAuthConfig(){
-    // Supabase yapılandırmasını doğrudan kullan (kullanıcı tarafından sağlandı)
-    return {
-      auth_provider: 'supabase',
-      supabase_url: 'https://dhbgmwkvoxnjzyskthba.supabase.co',
-      supabase_anon_key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRoYmdtd2t2b3huanp5c2t0aGJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwMzQ4NjksImV4cCI6MjA3NTYxMDg2OX0.kqxV3hbYDTo-fQQhXqp1OziB0bBymAqhDJn97s6piy0'
-    };
+      // Prefer configuration passed from the page (window.RISKO_CONFIG).
+      // For GitHub Pages, set RISKO_CONFIG in `config.js` to include supabase_url and supabase_anon_key.
+      const pageCfg = (window.RISKO_CONFIG && typeof window.RISKO_CONFIG === 'object') ? window.RISKO_CONFIG : {};
+      if (pageCfg.auth_provider === 'supabase' && pageCfg.supabase_url && pageCfg.supabase_anon_key) {
+        return {
+          auth_provider: 'supabase',
+          supabase_url: pageCfg.supabase_url,
+          supabase_anon_key: pageCfg.supabase_anon_key,
+        };
+      }
+
+      // No public config found. Do not return a secret from the repo.
+      console.warn('Supabase configuration not found in window.RISKO_CONFIG; Supabase auth disabled for safety.');
+      return null;
   }
 
   async function exchangeFromUrl(client){
