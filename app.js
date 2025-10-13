@@ -134,35 +134,65 @@ class RiskoPlatformApp {
     }
 
     async checkAuthentication() {
-    const { DEMO_MODE } = this.config;
+    const { DEMO_MODE } = this.config || {};
     const storedUser = sessionStorage.getItem('risko_user');
     let token = localStorage.getItem('risko_access_token');
-        if (DEMO_MODE) {
-            if (storedUser) this.user = JSON.parse(storedUser);
-            return;
-        }
-        if (!token) {
-            try {
-                if (window.RiskoAuth && await window.RiskoAuth.init() && window.RiskoAuth.enabled) {
-                    token = await window.RiskoAuth.getToken();
+
+    if (DEMO_MODE) {
+        if (storedUser) this.user = JSON.parse(storedUser);
+        return;
+    }
+
+    // Try to initialize RiskoAuth (Supabase) and retrieve session/user if available
+    try {
+        if (window.RiskoAuth) {
+            await window.RiskoAuth.init();
+            if (window.RiskoAuth.enabled) {
+                // Prefer getting user directly from RiskoAuth
+                const su = await window.RiskoAuth.getUser().catch(()=> null);
+                const st = await window.RiskoAuth.getToken().catch(()=> null);
+                if (su) {
+                    this.user = su;
+                    if (st) localStorage.setItem('risko_access_token', st);
+                    return;
                 }
-            } catch {}
+                if (st) token = st;
+            }
         }
-        if (!token) {
-            window.location.href = './login.html';
-            return;
+    } catch (e) {
+        console.warn('Supabase auth init failed:', e);
+    }
+
+    // If we still don't have a token, check stored session user as a last resort
+    if (!token) {
+        if (storedUser) {
+            try { this.user = JSON.parse(storedUser); return; } catch {}
         }
-        try {
-            const res = await fetch(`${this.config.API_BASE_URL}/api/v1/auth/me`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (!res.ok) throw new Error('auth failed');
-            const profile = await res.json();
-            this.user = profile;
-        } catch (e) {
-            localStorage.removeItem('risko_access_token');
-            window.location.href = './login.html';
-        }
+        // No token and no stored user -> redirect to login
+        window.location.href = './login.html';
+        return;
+    }
+
+    // If API_BASE_URL is not configured, but we have a token from Supabase, allow access.
+    if (!this.config || !this.config.API_BASE_URL) {
+        // We have a token and Supabase is used or stored user is present; assume authenticated
+        if (this.user && this.user.email) return;
+        // If no user object yet, try to fetch user via RiskoAuth (already attempted), otherwise allow access
+        return;
+    }
+
+    // Validate token against backend /me endpoint when API_BASE_URL is provided
+    try {
+        const res = await fetch(`${this.config.API_BASE_URL}/api/v1/auth/me`, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error('auth failed');
+        const profile = await res.json();
+        this.user = profile;
+    } catch (e) {
+        localStorage.removeItem('risko_access_token');
+        window.location.href = './login.html';
+    }
     }
 
     showLoading() {

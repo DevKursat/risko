@@ -89,6 +89,25 @@
     return data?.session?.access_token || null;
   }
 
+  async function getUser(){
+    if (!state.initialized) await init();
+    if (!state.enabled) return null;
+    try {
+      // Prefer getUser if available
+      if (typeof state.client.auth.getUser === 'function'){
+        const { data, error } = await state.client.auth.getUser();
+        if (error) throw error;
+        return data?.user || null;
+      }
+      // Fallback to session-based user
+      const { data: sessionData } = await state.client.auth.getSession();
+      return sessionData?.session?.user || null;
+    } catch (e) {
+      console.warn('Failed to get Supabase user:', e);
+      return null;
+    }
+  }
+
   window.RiskoAuth = {
     get enabled(){ return state.enabled; },
     init,
@@ -134,5 +153,6 @@
       return data;
     },
     getToken,
+    getUser,
   };
 })();
