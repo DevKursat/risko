@@ -66,5 +66,12 @@ class Settings(BaseSettings):
     MAP_STYLE_URL: Optional[str] = None
     MAPTILER_API_KEY: Optional[str] = None
 
+    # External real-time data endpoints (configure in production)
+    AFAD_API_URL: Optional[str] = "https://deprem.afad.gov.tr/apiv2"
+    KANDILLI_API_URL: Optional[str] = None
+    KANDILLI_HTTPS_URL: Optional[str] = None
+    OPENWEATHER_API_KEY: Optional[str] = None
+    WEATHERBIT_API_KEY: Optional[str] = None
+
 
 settings = Settings()

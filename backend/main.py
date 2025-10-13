@@ -10,6 +10,7 @@ from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.core.metrics import MetricsMiddleware, set_metrics_middleware, get_metrics_middleware
 from app.api import risk, b2b
+from app.api import proxy as proxy_router
 from app.api import analyze as analyze_router
 from app.api import analyses as analyses_router
 from app.api.auth import routes as auth_routes
@@ -85,6 +86,7 @@ app.include_router(analyze_router.router, prefix=f"{settings.API_V1_STR}", tags=
 app.include_router(analyses_router.router, prefix=f"{settings.API_V1_STR}", tags=["Analyses"])
 app.include_router(b2b.router, prefix=f"{settings.API_V1_STR}/b2b", tags=["B2B API"])
 app.include_router(auth_routes.router, prefix=f"{settings.API_V1_STR}/auth", tags=["Auth"])
+app.include_router(proxy_router.router, prefix=f"{settings.API_V1_STR}", tags=["Proxy"])
 
 """
 Serve frontend static files under /app path. Keep root (/) for API health/info JSON
