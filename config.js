@@ -26,6 +26,8 @@
     window.RISKO_CONFIG = {
         // API Configuration
         API_BASE_URL: defaultApi,
+        // Indicate auth provider so frontend picks up Supabase config
+        auth_provider: 'supabase',
         // Supabase configuration (embedded from supplied values)
         // NOTE: This anon key is public-facing client key. Do NOT add service-role keys here.
         supabase_url: 'https://dhbgmwkvoxnjzyskthba.supabase.co',
