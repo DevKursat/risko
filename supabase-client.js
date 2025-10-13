@@ -8,12 +8,12 @@
   };
 
   async function fetchAuthConfig(){
-    const url = `${CFG.API_BASE_URL}/api/v1/auth/config`;
-    try {
-      const res = await fetch(url);
-      if (!res.ok) return null;
-      return await res.json();
-    } catch { return null; }
+    // Supabase yapılandırmasını doğrudan kullan
+    return {
+      auth_provider: 'supabase',
+      supabase_url: 'https://dhbgmwkvoxnjzyskthba.supabase.co',
+      supabase_anon_key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRoYmdtd2t2b3huanp5c2t0aGJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwMzQ4NjksImV4cCI6MjA3NTYxMDg2OX0.kqxV3hbYDTo-fQQhXqp1OziB0bBymAqhDJn97s6piy0'
+    };
   }
 
   async function exchangeFromUrl(client){
