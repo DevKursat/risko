@@ -5,6 +5,7 @@ from datetime import datetime
 
 class AddressInput(BaseModel):
     address: str = Field(..., description="Full address to analyze")
+    building_age: Optional[int] = Field(None, description="Approximate building age in years (optional)")
 
 
 class RiskScoreResponse(BaseModel):

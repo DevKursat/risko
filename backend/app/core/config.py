@@ -19,8 +19,8 @@ class Settings(BaseSettings):
     ALLOWED_HOSTS: List[str] = ["*"]
     CORS_ORIGINS: List[str] = ["*"]
     
-    # Database
-    DATABASE_URL: Optional[str] = "sqlite:///./risko.db"
+    # Database - for MVP use a Postgres URL (e.g. Supabase). Do NOT use sqlite in production.
+    DATABASE_URL: Optional[str] = None
     
     # API Keys for B2B
     API_KEY_HEADER: str = "X-API-Key"
@@ -45,6 +45,24 @@ class Settings(BaseSettings):
     SMTP_USERNAME: Optional[str] = None
     SMTP_PASSWORD: Optional[str] = None
     SMTP_TLS: bool = True
+
+    # Auth Provider: "local" (default) or "supabase"
+    AUTH_PROVIDER: str = "local"
+    # Supabase settings (for auth + client usage)
+    SUPABASE_URL: Optional[str] = None
+    SUPABASE_ANON_KEY: Optional[str] = None
+    # JWT verify settings for Supabase (RS256)
+    SUPABASE_JWT_ALG: str = "RS256"
+    SUPABASE_JWKS_URL: Optional[str] = None
+
+    # Map & Geocoding (Google Maps alternative)
+    MAP_PROVIDER: str = "leaflet"  # leaflet | maplibre
+    TILE_URL: str = "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
+    TILE_ATTRIBUTION: str = "© OpenStreetMap contributors"
+    NOMINATIM_URL: str = "https://nominatim.openstreetmap.org"
+    # Optional MapTiler / Mapbox style use with MapLibre
+    MAP_STYLE_URL: Optional[str] = None
+    MAPTILER_API_KEY: Optional[str] = None
 
 
 settings = Settings()

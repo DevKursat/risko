@@ -1,6 +1,14 @@
 // Risko Configuration (unified for all environments)
 (function(){
-    const storedApi = (typeof localStorage !== 'undefined') ? localStorage.getItem('risko_api_base') : null;
+    const getParam = (key) => {
+        try { return new URLSearchParams(window.location.search).get(key); } catch { return null; }
+    };
+    let storedApi = (typeof localStorage !== 'undefined') ? localStorage.getItem('risko_api_base') : null;
+    // Query param ile geçici ayar (api veya api_base)
+    const qp = getParam('api') || getParam('api_base');
+    if (!storedApi && qp && /^https?:\/\//i.test(qp)) {
+        try { localStorage.setItem('risko_api_base', qp); storedApi = qp; } catch {}
+    }
     const defaultApi = storedApi || 'http://localhost:8000';
     window.RISKO_CONFIG = {
         // API Configuration
@@ -48,7 +56,7 @@
 
         // API Endpoints
         ENDPOINTS: {
-            RISK_ANALYZE: '/risk/analyze',
+            RISK_ANALYZE: '/analyze',
             BATCH_ANALYZE: '/risk/batch-analyze',
             MAP_DATA: '/risk/map-data',
             REPORTS: '/reports',
@@ -73,6 +81,16 @@
     const hostname = window.location.hostname;
     if (hostname.includes('github.io')) {
         window.RISKO_CONFIG.ENVIRONMENT = 'github-pages';
+        // Eğer API_BASE_URL hâlâ localhost ise kullanıcıdan alın
+        if (!storedApi) {
+            try {
+                const promptApi = window.prompt('Risko API adresini girin (https://api.sizin-domaininiz.com):');
+                if (promptApi && /^https?:\/\//i.test(promptApi)) {
+                    localStorage.setItem('risko_api_base', promptApi);
+                    window.RISKO_CONFIG.API_BASE_URL = promptApi;
+                }
+            } catch {}
+        }
         console.log('🚀 Risko Platform GitHub Pages üzerinde (gerçek API)');
     } else if (hostname === 'localhost' || hostname === '127.0.0.1') {
         window.RISKO_CONFIG.FEATURES.DEBUG_MODE = true;

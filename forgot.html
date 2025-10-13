@@ -39,17 +39,21 @@
   </div>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js"></script>
   <script src="./config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase-client.js"></script>
   <script>
     async function submitForgot(e){
       e.preventDefault();
       const email = document.getElementById('email').value.trim();
       Swal.fire({title:'İşleniyor...',allowOutsideClick:false,showConfirmButton:false,willOpen:()=>Swal.showLoading()});
       try{
-        const cfg = window.RISKO_CONFIG || { API_BASE_URL:'http://localhost:8000' };
-        const res = await fetch(`${cfg.API_BASE_URL}/api/v1/auth/password-reset/request`,{
-          method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email })
-        });
-        if(!res.ok){ throw new Error('request failed'); }
+        const cfg = window.RISKO_CONFIG || { API_BASE_URL: 'http://localhost:8000' };
+        if (window.RiskoAuth && await window.RiskoAuth.init() && window.RiskoAuth.enabled) {
+          await window.RiskoAuth.requestPasswordReset(email, cfg.FRONTEND_BASE_URL || undefined);
+        } else {
+          const res = await fetch(`${cfg.API_BASE_URL}/api/v1/auth/password-reset/request`,{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email }) });
+          if(!res.ok) throw new Error('failed');
+        }
         const data = await res.json();
         if(data.reset_token){
           // Geliştirme ortamında token döner; kullanıcıyı reset sayfasına yönlendir

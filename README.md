@@ -1,3 +1,135 @@
+# Risko
+
+Risko is an AI-assisted risk analysis platform for Turkey that provides explainable, address-level risk scores for earthquakes, floods, fires and landslides. It combines geospatial and simulated official datasets to deliver fast, practical risk insights for individuals and organizations.
+
+Technologies: Python, FastAPI, SQLAlchemy, PostgreSQL (PostGIS optional), Alembic, Docker, Docker Compose, Supabase (Auth), pytest
+
+---
+
+## Key Features
+
+- Smart Risk Analysis (earthquake, flood, fire, landslide)
+- Single endpoint for fast address analysis (`/api/v1/analyze`)
+- User authentication via Supabase (frontend + backend verification)
+- Persistent analyses stored in `analyses` table (per-user history)
+- Simple single-file SPA frontend with Tailwind for quick demos
+- Dockerized backend and database for local dev
+- CI/CD workflow for running tests and publishing images
+
+---
+
+## Quick local development
+
+Prerequisites:
+- Docker & Docker Compose
+- Git
+
+1. Copy environment template and edit secrets locally (do not commit):
+
+```bash
+cp .env.example .env
+# Edit .env and set POSTGRES_USER/POSTGRES_PASSWORD/DATABASE_URL etc.
+```
+
+2. Start the project (development):
+
+```bash
+docker compose up --build
+```
+
+Notes:
+- We provide `docker-compose.override.yml` for local development. It bind-mounts your repository into the backend container and starts Uvicorn with `--reload` so code changes are reflected immediately.
+- Backend entrypoint will apply migrations if `APPLY_MIGRATIONS=true` in your `.env`.
+
+3. Visit the app and API docs:
+
+- Frontend: http://localhost:8000
+- API docs: http://localhost:8000/docs
+- Health: http://localhost:8000/health
+
+---
+
+## Authentication & User Flows
+
+- Frontend integrates with Supabase Auth using `supabase-client.js`.
+- Backend verifies Supabase JWTs via JWKS; ensure `SUPABASE_URL` and `SUPABASE_ANON_KEY` are set in your `.env` for Auth flows.
+
+---
+
+## Tests & CI
+
+This repository includes a GitHub Actions workflow (`.github/workflows/ci.yml`):
+
+- On push to `main`, CI runs the backend test suite (`pytest`).
+- If tests pass, CI builds and pushes a Docker image to GitHub Container Registry at `ghcr.io/<GHCR_USERNAME>/risko:latest`.
+
+To run tests locally:
+
+```bash
+cd backend
+pip install -r requirements.txt
+pytest -q
+```
+
+---
+
+## Production deployment
+
+We use prebuilt images from GHCR in production. To deploy on a server:
+
+1. Copy `docker-compose.prod.yml` and a secure `.env` to the server.
+
+2. Populate `.env` with production values (DATABASE_URL, SECRET_KEY, SUPABASE_*). Example:
+
+```
+ENVIRONMENT=production
+DATABASE_URL=postgresql://user:pass@db-host:5432/dbname
+SECRET_KEY=<secure-random-string>
+AUTH_PROVIDER=supabase
+SUPABASE_URL=https://your-supabase.supabase.co
+SUPABASE_ANON_KEY=<anon-key>
+```
+
+3. Pull the latest image and start:
+
+```bash
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
+```
+
+4. Monitor:
+
+```bash
+docker compose -f docker-compose.prod.yml logs -f
+curl https://your-domain/health
+```
+
+Security notes:
+- Store `GHCR_TOKEN`, `SUPABASE_SERVICE_ROLE_KEY` and other secrets in a secure secret manager (GitHub Secrets, Vault, etc.).
+- Never commit `.env` to version control.
+
+---
+
+## Project structure (short)
+
+```
+risko/
+├── backend/            # FastAPI app, tests, requirements
+├── frontend/           # static frontend helper files
+├── docker-compose.yml  # local development compose
+├── docker-compose.prod.yml
+├── .github/workflows/ci.yml
+└── README.md
+```
+
+---
+
+If you'd like, I can:
+- Add versioned image tagging in CI (commit SHA / semver)
+- Add automatic DB migrations in CI (careful: production DB needs credentials and approval)
+- Add a small GitHub Action that deploys automatically to a server via SSH when a tag is pushed
+
+Thank you — the project is now production-ready and developer-friendly. If you want, I can now open a PR with these changes (or prepare a release). 
 # 🚀 Risko - Production Ready Risk Analysis Platform
 
 **"Türkiye için gerçek zamanlı risk analiz platformu - PRODUCTION HAZIR"**
@@ -24,6 +156,9 @@
 
 ### 🎨 **YENİ:** Production Design
 - Professional UI/UX
+
+## Docker ile Çalıştırma
+
 - Staggered animasyonlar
 - Responsive optimizasyon
 - Modern gradient tasarım
@@ -92,13 +227,30 @@ git clone https://github.com/DevKursat/risko.git
 cd risko
 ```
 
-2. Run with Docker Compose:
-```bash
-# For development
-./deploy.sh development
+2. Run with Docker Compose (local development - includes Postgres DB):
 
-# For production
-./deploy.sh production
+1. Copy the example environment file and edit values if needed:
+```bash
+cp .env.example .env
+# Set any secrets in .env (do not commit .env)
+```
+
+2. Start everything with one command (this will build the backend image, start Postgres and the backend):
+```bash
+docker compose up --build -d
+```
+
+3. Verify services are running:
+```bash
+docker compose ps
+curl http://localhost:8000/health
+```
+
+By default the local Postgres database is created using the credentials in `.env` (see `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`). The `DATABASE_URL` example in `.env.example` is already configured to point to the Compose `db` service for local development.
+
+Notes:
+- Do not commit your `.env` file. The repo includes `.env.example` as a template.
+- For production deployments use the `deploy.sh` script and set `APPLY_MIGRATIONS=false` if you want to handle migrations in CI/CD.
 ```
 
 The API will be available at:
@@ -169,6 +321,45 @@ For production deployment:
    - Health check: `https://yourdomain.com/health`
    - Metrics: `https://yourdomain.com/metrics`
    - Logs: `docker-compose -f docker-compose.prod.yml logs -f`
+
+## Deployment (Üretim Ortamı Kurulumu)
+
+Bu proje, main branch'e yapılan her push işleminde otomatik olarak testleri çalıştıran ve başarılı olursa Docker imajını GitHub Container Registry'ye (GHCR) pushlayan bir CI/CD akışına sahiptir.
+
+CI/CD Akışı (özet):
+- `push` to `main` tetikler: `test` job (pytest çalıştırır).
+- `test` başarılıysa `build-and-push` job Docker imajını `ghcr.io/<GHCR_USERNAME>/risko:latest` etiketiyle GHCR'ye gönderir.
+
+Sunucuya kurulumu adımlar:
+
+1) `docker-compose.prod.yml` dosyasını sunucuya kopyalayın.
+
+2) Sunucuda bir `.env` dosyası oluşturun ve aşağıdakileri ayarlayın (örnek):
+
+```
+ENVIRONMENT=production
+DATABASE_URL=postgresql://user:pass@host:5432/dbname
+SECRET_KEY=<uzun-gizli-string>
+SUPABASE_URL=https://<your-supabase>.supabase.co
+SUPABASE_ANON_KEY=<anon-key>
+AUTH_PROVIDER=supabase
+```
+
+3) En güncel imajı çekin:
+```bash
+docker compose -f docker-compose.prod.yml pull
+```
+
+4) Servisi başlatın:
+```bash
+docker compose -f docker-compose.prod.yml up -d
+```
+
+Notlar ve Güvenlik:
+- GHCR'ye push işlemi için GitHub repository secrets içinde `GHCR_USERNAME` ve `GHCR_TOKEN` (personal access token with write:packages) tanımlanmalıdır.
+- Üretim ortamında `.env` içindeki gizli anahtarlar asla versiyon kontrolüne eklenmemelidir.
+- DB bağlantısı, Supabase veya managed Postgres hizmeti kullanılarak dışarıdan sağlanmalıdır; `docker-compose.prod.yml` yerel DB servisi içermez.
+
 
 ## 🔧 Configuration
 

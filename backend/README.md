@@ -68,6 +68,14 @@ uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4
 
 The API will be available at `http://localhost:8000`
 
+### Automatic migrations control
+
+The container entrypoint supports an environment variable `APPLY_MIGRATIONS`.
+- If `APPLY_MIGRATIONS=true`, the container will run `alembic upgrade head` at startup before launching the server.
+- If `APPLY_MIGRATIONS` is unset or not `true`, migrations will be skipped and the server will start immediately.
+
+This lets you choose between automatic migrations (useful for dev/staging) and manual/CI-driven migrations for production.
+
 ## API Documentation
 
 ### Interactive Documentation
@@ -225,8 +233,16 @@ Set all required environment variables in production:
 - API keys and secrets
 
 ### Database Migration
+
+Automatic migrations: When you run the backend via Docker (or with the provided entrypoint),
+the container will automatically run migrations at startup (`alembic upgrade head`) before
+starting the web server. This makes deployment a single-step process when using Docker Compose.
+
+If you prefer to run migrations manually (local development), ensure `DATABASE_URL` is set and run:
+
 ```bash
-alembic upgrade head
+# From the repository root or backend directory
+alembic -c backend/alembic.ini upgrade head
 ```
 
 ### HTTPS/SSL
@@ -264,4 +280,19 @@ For technical support or questions:
 ## License
 
 MIT License - see LICENSE file for details
+
+
+## Supabase: Analyses Tablosu Kurulumu (Hızlı)
+
+Projede analiz sonuçlarını saklamak için Supabase içinde `analyses` tablosu kullanılır. Aşağıdaki dosyayı Supabase projenizin SQL Editor'üne yapıştırıp çalıştırabilirsiniz:
+
+`backend/sql/create_analyses_table.sql`
+
+Adımlar:
+1. Supabase projenize gidin -> SQL Editor.
+2. `backend/sql/create_analyses_table.sql` içeriğini kopyalayın ve çalıştırın.
+3. SQL çalıştırıldıktan sonra `analyses` tablosu oluşacak ve Row Level Security (RLS) politikaları aktif olacaktır.
+4. Eğer uygulamanız `create_all` ile tablo yaratamıyorsa, bu SQL'i çalıştırmak en hızlı yoldur.
+
+Not: RLS politikaları kullanıcının sadece kendi kayıtlarını görmesini sağlar; admin erişimi veya daha geniş paylaşımlar için ek policy'ler eklemeniz gerekebilir.
 

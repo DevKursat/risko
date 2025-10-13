@@ -21,6 +21,7 @@ from app.services.user_service import (
 from app.schemas.user import UserCreate, UserPublic, Token
 from app.models.user import RefreshToken
 from app.services.email_service import send_password_reset_email
+from app.services.supabase_auth import verify_supabase_jwt
 
 
 router = APIRouter()
@@ -28,6 +29,17 @@ router = APIRouter()
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 8
 REFRESH_TOKEN_EXPIRE_DAYS = 30
 ALGORITHM = "HS256"
+@router.get("/config")
+def auth_config():
+    if settings.AUTH_PROVIDER == "supabase":
+        return {
+            "auth_provider": "supabase",
+            "supabase_url": settings.SUPABASE_URL,
+            "supabase_anon_key": settings.SUPABASE_ANON_KEY,
+            "redirect_to": settings.FRONTEND_BASE_URL,
+        }
+    return {"auth_provider": "local"}
+
 
 
 def create_access_token(subject: str, expires_delta: Optional[timedelta] = None) -> str:
@@ -52,6 +64,17 @@ def get_current_user_from_token(authorization: Optional[str], db: Session) -> Us
     if not authorization or not authorization.lower().startswith("bearer "):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Yetkilendirme gerekli")
     token = authorization.split(" ", 1)[1]
+    # If configured to use Supabase, validate via JWKS and map claims
+    if settings.AUTH_PROVIDER == "supabase":
+        try:
+            claims = verify_supabase_jwt(token)
+            email = claims.get("email") or claims.get("sub")
+            name = claims.get("user_metadata", {}).get("name") or email
+            # Return ad-hoc user (no local DB dependency)
+            return UserPublic(id=0, name=name or "User", email=email)
+        except Exception:
+            raise HTTPException(status_code=401, detail="Geçersiz token")
+    # Default local JWT
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[ALGORITHM])
         if payload.get("type") != "access":
@@ -67,6 +90,9 @@ def get_current_user_from_token(authorization: Optional[str], db: Session) -> Us
 
 @router.post("/register", response_model=UserPublic)
 def register(user: UserCreate, db: Session = Depends(get_db)):
+    if settings.AUTH_PROVIDER == "supabase":
+        # Registration should be handled on the frontend via Supabase; backend returns 405
+        raise HTTPException(status_code=405, detail="Register is handled by Supabase")
     existing = get_user_by_email(db, user.email)
     if existing:
         raise HTTPException(status_code=400, detail="Kullanıcı zaten var")
@@ -76,6 +102,9 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 
 @router.post("/login", response_model=Token)
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    if settings.AUTH_PROVIDER == "supabase":
+        # Login handled by Supabase on the client; backend does not issue tokens
+        raise HTTPException(status_code=405, detail="Login is handled by Supabase")
     # OAuth2PasswordRequestForm fields: username, password
     user = get_user_by_email(db, form_data.username)
     if not user or not verify_password(form_data.password, user.password_hash):
@@ -95,6 +124,8 @@ class RefreshRequest(BaseModel):
 
 @router.post("/refresh", response_model=Token)
 def refresh_token(body: RefreshRequest, db: Session = Depends(get_db)):
+    if settings.AUTH_PROVIDER == "supabase":
+        raise HTTPException(status_code=405, detail="Refresh is handled by Supabase")
     token_str = body.refresh_token
     try:
         payload = jwt.decode(token_str, settings.SECRET_KEY, algorithms=[ALGORITHM])
@@ -145,6 +176,9 @@ class PasswordResetRequest(BaseModel):
 
 @router.post("/password-reset/request")
 def password_reset_request(body: PasswordResetRequest, db: Session = Depends(get_db)):
+    if settings.AUTH_PROVIDER == "supabase":
+        # Password reset is handled by Supabase magic link
+        raise HTTPException(status_code=405, detail="Password reset is handled by Supabase")
     # Her durumda 200 dönerek bilgi sızmasını engelle
     user = get_user_by_email(db, body.email)
     token = None
@@ -166,6 +200,8 @@ class PasswordResetConfirm(BaseModel):
 
 @router.post("/password-reset/confirm")
 def password_reset_confirm(body: PasswordResetConfirm, db: Session = Depends(get_db)):
+    if settings.AUTH_PROVIDER == "supabase":
+        raise HTTPException(status_code=405, detail="Password reset is handled by Supabase")
     rec = get_valid_password_reset(db, body.token)
     if not rec:
         raise HTTPException(status_code=400, detail="Geçersiz veya süresi dolmuş bağlantı")

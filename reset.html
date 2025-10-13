@@ -47,6 +47,8 @@
   </div>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js"></script>
   <script src="./config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="./supabase-client.js"></script>
   <script>
     async function submitReset(e){
       e.preventDefault();
@@ -63,11 +65,13 @@
       }
       Swal.fire({title:'İşleniyor...',allowOutsideClick:false,showConfirmButton:false,willOpen:()=>Swal.showLoading()});
       try{
-        const cfg = window.RISKO_CONFIG || { API_BASE_URL:'http://localhost:8000' };
-        const res = await fetch(`${cfg.API_BASE_URL}/api/v1/auth/password-reset/confirm`,{
-          method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token, password:p1 })
-        });
-        if(!res.ok) throw new Error('reset failed');
+        const cfg = window.RISKO_CONFIG || { API_BASE_URL: 'http://localhost:8000' };
+        if (window.RiskoAuth && await window.RiskoAuth.init() && window.RiskoAuth.enabled) {
+          await window.RiskoAuth.updatePassword(password);
+        } else {
+          const res = await fetch(`${cfg.API_BASE_URL}/api/v1/auth/password-reset/confirm`,{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token, password }) });
+          if(!res.ok) throw new Error('failed');
+        }
         Swal.fire({icon:'success',title:'Şifre güncellendi',text:'Giriş sayfasına yönlendiriliyorsunuz...',timer:1500,showConfirmButton:false}).then(()=>{
           window.location.href = './login.html';
         });

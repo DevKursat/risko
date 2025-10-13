@@ -1,11 +1,9 @@
-from typing import Dict, Tuple, Optional
+from typing import Dict, Tuple, Optional, List
 import random
-import requests
-import json
-import asyncio
+import time
 from geopy.geocoders import Nominatim
 from geopy.exc import GeocoderTimedOut
-from datetime import datetime, timedelta
+from datetime import datetime
 
 
 class RiskCalculationService:
@@ -65,6 +63,9 @@ class RiskCalculationService:
                 'building_age_avg': 25
             }
         }
+
+        # Simulation control: small chance to simulate external API failure
+        self.simulated_api_failure_rate = 0.03  # 3% chance
     
     def geocode_address(self, address: str) -> Optional[Tuple[float, float]]:
         """Convert Turkish address to latitude and longitude using real geocoding."""
@@ -114,23 +115,102 @@ class RiskCalculationService:
         
         # Default to Turkey center
         return (39.0, 35.0)
+
+    # --- Simulated external data sources ---
+    def _maybe_fail(self):
+        """Randomly simulate external API failures to test error handling."""
+        if random.random() < self.simulated_api_failure_rate:
+            raise RuntimeError("Simulated external API failure")
+
+    def simulate_kandilli(self, lat: float, lon: float) -> Dict:
+        """Return simulated fault line info near the coordinates.
+
+        Structure resembles a possible real API response: a list of nearby faults with distance_km and hazard_level.
+        """
+        self._maybe_fail()
+        # simple deterministic pseudo-random but repeatable by rounding coords
+        key = (round(lat, 2), round(lon, 2))
+        # simulate a few faults with distance and hazard
+        faults = []
+        base = int((abs(key[0]) + abs(key[1])) * 10) % 5
+        for i in range(1, 4):
+            dist = max(0.1, (i * (base + 1)) * 0.2)
+            hazard = max(10, min(95, 95 - dist * 10 - base * 2))
+            faults.append({
+                'name': f'Fault-{base + i}',
+                'distance_km': round(dist * 100, 1),
+                'hazard': int(hazard)
+            })
+        return {'faults': faults}
+
+    def simulate_afad_recent_quakes(self, lat: float, lon: float) -> Dict:
+        """Return simulated recent earthquake activity like AFAD might provide."""
+        self._maybe_fail()
+        # create deterministic counts based on coords
+        magnitude_base = ((abs(round(lat)) + abs(round(lon))) % 3) + 2
+        quakes = []
+        for i in range(3):
+            mag = round(magnitude_base + (i * 0.3), 1)
+            quakes.append({'magnitude': mag, 'distance_km': 5 * (i + 1), 'time': datetime.utcnow().isoformat() + 'Z'})
+        return {'recent_quakes': quakes}
+
+    def simulate_mgm(self, lat: float, lon: float) -> Dict:
+        """Return simulated climate data (e.g., average annual precipitation)."""
+        self._maybe_fail()
+        # Rough deterministic mapping: Black Sea area wetter, central drier, med warmer/dryer
+        if 40.5 <= lat <= 42.0 and 35.0 <= lon <= 42.0:
+            avg_rain = 1200  # mm/year
+        elif 36.0 <= lat <= 38.0 and 28.0 <= lon <= 36.0:
+            avg_rain = 600
+        else:
+            avg_rain = 400
+        return {'average_annual_precip_mm': avg_rain}
+
+    def simulate_elevation(self, lat: float, lon: float) -> Dict:
+        """Return simulated elevation (meters) based on rough regions."""
+        self._maybe_fail()
+        if 40.5 <= lat <= 42.0 and 35.0 <= lon <= 42.0:
+            elev = 600
+        elif 36.0 <= lat <= 38.5 and 28.0 <= lon <= 36.0:
+            elev = 50
+        else:
+            elev = 900
+        return {'elevation_m': elev}
     
     def get_real_earthquake_risk(self, lat: float, lon: float) -> float:
         """Calculate earthquake risk using real Turkish seismic data."""
         try:
-            # Check proximity to known fault lines
-            fault_risk = self._calculate_fault_proximity_risk(lat, lon)
-            
-            # Get recent earthquake activity from AFAD/Kandilli data
-            historical_risk = self._get_historical_earthquake_risk(lat, lon)
-            
-            # Soil type risk (soft soils amplify seismic waves)
+            # Use simulated external sources
+            kandilli = self.simulate_kandilli(lat, lon)
+            afad = self.simulate_afad_recent_quakes(lat, lon)
             soil_risk = self._estimate_soil_risk(lat, lon)
-            
-            # Combine risks with weights
+
+            # Proximity to closest fault
+            if kandilli and kandilli.get('faults'):
+                closest = min(fault['distance_km'] for fault in kandilli['faults'])
+                # closer faults => higher risk
+                if closest < 20:
+                    fault_risk = 90
+                elif closest < 50:
+                    fault_risk = 75
+                elif closest < 100:
+                    fault_risk = 55
+                else:
+                    fault_risk = 30
+            else:
+                fault_risk = self._calculate_fault_proximity_risk(lat, lon)
+
+            # recent quake activity influences risk
+            recent = afad.get('recent_quakes', []) if afad else []
+            if recent:
+                # if any magnitude >=5.0 nearby, increase
+                max_mag = max(q.get('magnitude', 0) for q in recent)
+                historical_risk = min(90, 30 + (max_mag - 2) * 15)
+            else:
+                historical_risk = self._get_historical_earthquake_risk(lat, lon)
+
             total_risk = (fault_risk * 0.5 + historical_risk * 0.3 + soil_risk * 0.2)
-            
-            return min(max(total_risk, 5), 95)  # Clamp between 5-95
+            return min(max(total_risk, 5), 95)
             
         except Exception as e:
             print(f"Earthquake risk calculation error: {e}")
@@ -196,22 +276,35 @@ class RiskCalculationService:
     def get_real_flood_risk(self, lat: float, lon: float) -> float:
         """Calculate flood risk using real geographical and meteorological data."""
         try:
-            # Elevation-based risk (lower elevations = higher flood risk)
-            elevation_risk = self._get_elevation_risk(lat, lon)
-            
-            # Proximity to rivers and water bodies
+            # Use simulated elevation and MGM precipitation
+            elev = self.simulate_elevation(lat, lon).get('elevation_m')
+            mgm = self.simulate_mgm(lat, lon)
+
+            # elevation risk: lower elevation -> higher
+            if elev is not None:
+                if elev < 50:
+                    elevation_risk = 80
+                elif elev < 200:
+                    elevation_risk = 55
+                else:
+                    elevation_risk = 20
+            else:
+                elevation_risk = self._get_elevation_risk(lat, lon)
+
+            precipitation = mgm.get('average_annual_precip_mm', 400)
+            if precipitation > 1000:
+                precipitation_risk = 75
+            elif precipitation > 600:
+                precipitation_risk = 55
+            else:
+                precipitation_risk = 30
+
             water_proximity_risk = self._get_water_proximity_risk(lat, lon)
-            
-            # Climate-based precipitation risk
-            precipitation_risk = self._get_precipitation_risk(lat, lon)
-            
-            # Urban drainage capacity
             drainage_risk = self._get_drainage_risk(lat, lon)
-            
-            total_risk = (elevation_risk * 0.3 + water_proximity_risk * 0.3 + 
+
+            total_risk = (elevation_risk * 0.35 + water_proximity_risk * 0.25 +
                          precipitation_risk * 0.25 + drainage_risk * 0.15)
-            
-            return min(max(total_risk, 5), 85)
+            return min(max(total_risk, 5), 90)
             
         except Exception as e:
             print(f"Flood risk calculation error: {e}")
@@ -343,13 +436,20 @@ class RiskCalculationService:
         try:
             # Slope-based risk
             slope_risk = self._get_slope_risk(lat, lon)
-            
+
             # Geological composition risk
             geological_risk = self._get_geological_risk(lat, lon)
-            
-            # Precipitation-triggered landslide risk
-            precipitation_trigger_risk = self._get_precipitation_trigger_risk(lat, lon)
-            
+
+            # precipitation trigger uses simulated MGM
+            mgm = self.simulate_mgm(lat, lon)
+            precip = mgm.get('average_annual_precip_mm', 400)
+            if precip > 1000:
+                precipitation_trigger_risk = 70
+            elif precip > 600:
+                precipitation_trigger_risk = 50
+            else:
+                precipitation_trigger_risk = 25
+
             # Human activity risk (construction, mining)
             human_activity_risk = self._get_human_activity_risk(lat, lon)
             

@@ -10,6 +10,8 @@ from fastapi.staticfiles import StaticFiles
 from app.core.config import settings
 from app.core.metrics import MetricsMiddleware, set_metrics_middleware, get_metrics_middleware
 from app.api import risk, b2b
+from app.api import analyze as analyze_router
+from app.api import analyses as analyses_router
 from app.api.auth import routes as auth_routes
 from app.db.session import Base, engine
 
@@ -79,6 +81,8 @@ async def log_requests(request: Request, call_next):
 
 # Include routers (preserve existing functionality)
 app.include_router(risk.router, prefix=f"{settings.API_V1_STR}/risk", tags=["Risk Analysis"])
+app.include_router(analyze_router.router, prefix=f"{settings.API_V1_STR}", tags=["Analyze"])
+app.include_router(analyses_router.router, prefix=f"{settings.API_V1_STR}", tags=["Analyses"])
 app.include_router(b2b.router, prefix=f"{settings.API_V1_STR}/b2b", tags=["B2B API"])
 app.include_router(auth_routes.router, prefix=f"{settings.API_V1_STR}/auth", tags=["Auth"])
 
@@ -129,4 +133,15 @@ async def root():
     return {
         "message": "Risko API",
         "version": settings.VERSION
+    }
+
+@app.get("/config/map")
+async def map_config():
+    return {
+        "provider": settings.MAP_PROVIDER,
+        "tile_url": settings.TILE_URL,
+        "attribution": settings.TILE_ATTRIBUTION,
+        "nominatim_url": settings.NOMINATIM_URL,
+        "map_style_url": settings.MAP_STYLE_URL,
+        "maptiler_api_key": settings.MAPTILER_API_KEY,
     }

@@ -1,3 +1,417 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Risko — Afet Riskini Bilin</title>
+  <meta name="description" content="Risko - Afet risk analizi platformu">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = {theme: {extend: {colors: {brand: '#4f46e5'}}}};</script>
+  <link rel="icon" href="/favicon.svg">
+</head>
+<body class="bg-gray-50 text-gray-800 antialiased">
+
+  <script src="/config.js"></script>
+  <!-- Supabase JS (v2) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script src="/supabase-client.js"></script>
+
+  <!-- App auth glue: override analyze calls to include Bearer token, protect panel, show history -->
+  <script>
+    (function(){
+      async function ensureAuth(){ try{ await window.RiskoAuth.init(); }catch(e){} }
+      async function getToken(){ await ensureAuth(); try{ return await window.RiskoAuth.getToken(); }catch(e){return null;} }
+
+      // Replace global callAnalyze to include Authorization header when available
+      async function enhancedCallAnalyze(body){
+        const token = await getToken();
+        const headers = {'Content-Type':'application/json'};
+        if(token) headers['Authorization'] = 'Bearer ' + token;
+        const res = await fetch(apiBase() + analyzeEndpoint(), { method:'POST', headers, body: JSON.stringify(body) });
+        if(!res.ok){ let txt='Sunucu hatası'; try{ const j = await res.json(); txt = j.detail?.error || j.detail || JSON.stringify(j); }catch{} throw new Error(txt); }
+        return await res.json();
+      }
+      // override existing callAnalyze if present
+      window.callAnalyze = enhancedCallAnalyze;
+
+      // Update nav links and panel protection
+      async function updateNav(){ await ensureAuth(); const token = await getToken();
+        document.querySelectorAll('#nav-login').forEach(el=>{ if(token){ el.textContent='Panelim'; el.href='#panel'; } else { el.textContent='Giriş Yap'; el.href='#login'; } });
+        document.querySelectorAll('#nav-panel').forEach(el=>{ if(token) el.classList.remove('hidden'); else el.classList.add('hidden'); });
+      }
+
+      // Load user analyses into #history
+      async function loadHistory(){ const historyEl = document.getElementById('history'); if(!historyEl) return; const token = await getToken(); if(!token){ historyEl.innerHTML = '<div class="text-gray-600">Giriş yapın, geçmiş analizlerinizi görmek için.</div>'; return; }
+        try{
+          const res = await fetch((apiBase() || '') + '/api/v1/analyses/me', { headers: { 'Authorization': 'Bearer ' + token } });
+          if(!res.ok){ historyEl.innerText = 'Geçmiş alınamadı'; return; }
+          const items = await res.json();
+          if(!items || items.length===0){ historyEl.innerHTML = '<div class="text-gray-600">Henüz kaydedilmiş analiz yok.</div>'; return; }
+          // render simple table
+          let html = '<table class="w-full text-sm"><thead><tr class="text-left"><th>Adres</th><th>Genel Skor</th><th>Tarih</th></tr></thead><tbody>';
+          for(const it of items){ html += `<tr class="border-t"><td class="py-2">${it.address||''}</td><td class="py-2">${Math.round((it.overall_risk_score||0))}%</td><td class="py-2">${it.created_at||''}</td></tr>`; }
+          html += '</tbody></table>';
+          historyEl.innerHTML = html;
+        }catch(e){ historyEl.innerText = 'Geçmiş alınamadı'; }
+      }
+
+      // Protect panel route: when navigating to panel, check auth
+      document.addEventListener('click', async function(e){ const t = e.target; if(t && (t.id==='nav-panel' || t.getAttribute && t.getAttribute('href')==='#panel')){ const token = await getToken(); if(!token){ e.preventDefault(); show('login'); window.location.hash='login'; } else { show('panel'); window.location.hash='panel'; await loadHistory(); } } });
+
+      // Hook login form to update nav and load history after successful login
+      const loginForm = document.getElementById('login-form'); if(loginForm){ loginForm.addEventListener('submit', async function(ev){ ev.preventDefault(); const email = document.getElementById('login-email').value; const pw = document.getElementById('login-password').value; try{ await ensureAuth(); await window.RiskoAuth.login(email,pw); await updateNav(); show('panel'); window.location.hash='panel'; await loadHistory(); alert('Giriş başarılı'); }catch(err){ alert('Giriş başarısız: ' + (err.message||err)); } }); }
+
+      const regForm = document.getElementById('register-form'); if(regForm){ regForm.addEventListener('submit', async function(ev){ ev.preventDefault(); const name = document.getElementById('reg-name').value; const email = document.getElementById('reg-email').value; const pw = document.getElementById('reg-password').value; try{ await ensureAuth(); await window.RiskoAuth.register(name,email,pw); alert('Kayıt başarılı, e-postanızı doğrulayın'); show('login'); window.location.hash='login'; }catch(err){ alert('Kayıt başarısız: ' + (err.message||err)); } }); }
+
+      // Logout button
+      const logoutBtn = document.getElementById('logout'); if(logoutBtn){ logoutBtn.addEventListener('click', async function(){ try{ if(window.supabase && window.supabase.auth && typeof window.supabase.auth.signOut === 'function'){ await window.supabase.auth.signOut(); } else if(window.RiskoAuth && typeof window.RiskoAuth.signOut === 'function'){ await window.RiskoAuth.signOut(); } }catch(e){} await updateNav(); show('login'); window.location.hash='login'; }); }
+
+      // Ensure nav state on load
+      document.addEventListener('DOMContentLoaded', updateNav);
+      // Also call immediately
+      updateNav();
+    })();
+  </script>
+
+  <nav class="bg-white shadow-sm">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="flex justify-between items-center h-16">
+        <a href="#anasayfa" class="text-2xl font-bold text-brand">Risko</a>
+        <div class="flex items-center gap-3">
+          <a id="nav-login" class="text-sm text-gray-700 hover:text-brand" href="#login">Giriş Yap</a>
+          <button id="nav-cta" class="hidden md:inline-block bg-brand text-white px-4 py-2 rounded-md">Hemen Analiz Et</button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main class="max-w-6xl mx-auto p-6">
+    <!doctype html>
+    <html lang="tr">
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>Risko — Afet Riskini Bilin, Güvende Kalın</title>
+      <meta name="description" content="Risko - Afet risk analizi platformu">
+      <script src="https://cdn.tailwindcss.com"></script>
+      <script>tailwind.config = {theme: {extend: {colors: {brand: '#0f172a', accent: '#4f46e5'}}}};</script>
+      <link rel="icon" href="/favicon.svg">
+      <style>body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial}</style>
+    </head>
+    <body class="bg-slate-50 text-slate-800">
+      <header class="bg-white shadow">
+        <div class="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+          <div class="flex items-center gap-4">
+            <a href="#anasayfa" class="text-2xl font-bold text-brand">Risko</a>
+            <nav class="hidden md:flex gap-4 text-slate-600">
+              <a class="nav-link" href="#anasayfa">Ana Sayfa</a>
+              <a class="nav-link" href="#fiyatlandirma">Paketler</a>
+              <a class="nav-link" href="#login">Giriş</a>
+            </nav>
+          </div>
+          <div class="flex items-center gap-3">
+            <button id="nav-panel" class="hidden md:inline-block bg-accent text-white px-4 py-2 rounded">Panelim</button>
+            <button id="nav-login" class="text-sm text-slate-700">Giriş Yap</button>
+          </div>
+        </div>
+      </header>
+
+      <main class="max-w-6xl mx-auto px-6 py-10">
+        <!-- Hero -->
+        <section id="anasayfa" class="grid md:grid-cols-2 gap-8 items-center">
+          <div>
+            <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900">Risko</h1>
+            <p class="mt-4 text-slate-600">Afet riskinizi hızlıca öğrenin. Gerçek verilere dayanan, açıklanabilir analizler.</p>
+            <div class="mt-6 flex gap-3">
+              <button id="cta-analyze" class="px-6 py-3 bg-accent text-white rounded shadow">Hemen Analiz Et</button>
+              <a href="#fiyatlandirma" class="px-6 py-3 border border-slate-200 rounded">Paketleri İncele</a>
+            </div>
+            <div class="mt-8 text-sm text-slate-500">Kurumsal & Bireysel çözümler — API erişimi sağlanır.</div>
+          </div>
+          <div class="bg-white p-6 rounded-lg shadow">
+            <label class="block text-sm text-slate-600">Adres</label>
+            <div class="mt-2 flex gap-2">
+              <input id="hero-address" class="flex-1 border rounded px-3 py-2" placeholder="İstanbul, Beyoğlu, Galata...">
+              <button id="hero-go" class="px-4 py-2 bg-accent text-white rounded">Analiz</button>
+            </div>
+            <pre id="hero-result" class="mt-4 text-sm bg-slate-50 p-3 rounded hidden"></pre>
+          </div>
+        </section>
+
+        <!-- Pricing -->
+        <section id="fiyatlandirma" class="mt-16">
+          <h2 class="text-2xl font-bold">Paketler</h2>
+          <p class="mt-2 text-slate-600">İhtiyacınıza uygun planı seçin.</p>
+          <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white p-6 rounded-lg shadow">
+              <h3 class="font-semibold">Bireysel</h3>
+              <div class="mt-4 text-3xl font-extrabold">Ücretsiz</div>
+              <ul class="mt-4 text-sm text-slate-600 space-y-2">
+                <li>• 5 Analiz / Ay</li>
+                <li>• Özet risk raporu</li>
+              </ul>
+              <button class="mt-6 w-full px-4 py-2 bg-slate-100 rounded">Seç</button>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow ring-2 ring-accent">
+              <h3 class="font-semibold">Premium</h3>
+              <div class="mt-4 text-3xl font-extrabold">€19.99</div>
+              <ul class="mt-4 text-sm text-slate-600 space-y-2">
+                <li>• Detaylı rapor</li>
+                <li>• Önleyici öneriler</li>
+              </ul>
+              <button class="mt-6 w-full px-4 py-2 bg-accent text-white rounded">Satın Al</button>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow">
+              <h3 class="font-semibold">Pro API</h3>
+              <div class="mt-4 text-3xl font-extrabold">Kurumsal</div>
+              <ul class="mt-4 text-sm text-slate-600 space-y-2">
+                <li>• Toplu Analiz</li>
+                <li>• SLA ve Destek</li>
+              </ul>
+              <button class="mt-6 w-full px-4 py-2 border border-accent text-accent rounded">Bize Ulaşın</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Auth -->
+        <section id="auth" class="mt-16 grid md:grid-cols-2 gap-6">
+          <div id="login" class="bg-white p-6 rounded shadow">
+            <h3 class="text-lg font-semibold">Giriş Yap</h3>
+            <form id="login-form" class="mt-4 space-y-3">
+              <input id="login-email" class="w-full border rounded px-3 py-2" placeholder="E-posta">
+              <input id="login-password" type="password" class="w-full border rounded px-3 py-2" placeholder="Parola">
+              <div class="flex items-center justify-between">
+                <button class="px-4 py-2 bg-accent text-white rounded" type="submit">Giriş Yap</button>
+                <a href="#register" class="text-sm text-slate-600">Hesap Oluştur</a>
+              </div>
+            </form>
+          </div>
+          <div id="register" class="bg-white p-6 rounded shadow">
+            <h3 class="text-lg font-semibold">Kayıt Ol</h3>
+            <form id="register-form" class="mt-4 space-y-3">
+              <input id="reg-name" class="w-full border rounded px-3 py-2" placeholder="Adınız">
+              <input id="reg-email" class="w-full border rounded px-3 py-2" placeholder="E-posta">
+              <input id="reg-password" type="password" class="w-full border rounded px-3 py-2" placeholder="Parola">
+              <div class="flex items-center justify-between">
+                <button class="px-4 py-2 bg-accent text-white rounded" type="submit">Hesap Oluştur</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- Panel -->
+        <section id="panel" class="mt-16 hidden">
+          <div class="bg-white p-6 rounded shadow">
+            <div class="flex items-center justify-between">
+              <h3 class="text-xl font-semibold">Panelim</h3>
+              <div class="flex items-center gap-3">
+                <button id="logout" class="px-3 py-1 border rounded">Çıkış Yap</button>
+              </div>
+            </div>
+
+            <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div class="md:col-span-2">
+                <label class="text-sm text-slate-600">Adres Girin</label>
+                <div class="mt-2 flex gap-2">
+                  <input id="panel-address" class="flex-1 border rounded px-3 py-2" placeholder="Adres, İlçe, Şehir">
+                  <input id="panel-building-age" type="number" min="0" placeholder="Bina yaşı (opsiyonel)" class="w-48 border rounded px-3 py-2">
+                  <button id="panel-analyze-btn" class="px-4 py-2 bg-accent text-white rounded">Riski Analiz Et</button>
+                </div>
+
+                <div id="analysis-loading" class="mt-6 hidden">
+                  <div class="flex items-center gap-3">
+                    <svg class="animate-spin h-6 w-6 text-accent" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg>
+                    <div>Analiz yapılıyor, lütfen bekleyin...</div>
+                  </div>
+                </div>
+
+                <div id="analysis-result" class="mt-6 hidden bg-slate-50 p-4 rounded">
+                  <h4 class="font-semibold">Genel Risk</h4>
+                  <div id="overall-score" class="text-4xl font-extrabold text-slate-900 mt-2">--</div>
+                  <div class="mt-4 space-y-4">
+                    <div>
+                      <div class="flex justify-between text-sm"><span>Deprem</span><span id="r-earthquake">0%</span></div>
+                      <div class="w-full bg-slate-200 h-4 rounded mt-1 overflow-hidden"><div id="bar-earthquake" class="h-4 rounded bg-green-500" style="width:0%"></div></div>
+                    </div>
+                    <div>
+                      <div class="flex justify-between text-sm"><span>Sel</span><span id="r-flood">0%</span></div>
+                      <div class="w-full bg-slate-200 h-4 rounded mt-1 overflow-hidden"><div id="bar-flood" class="h-4 rounded bg-green-500" style="width:0%"></div></div>
+                    </div>
+                    <div>
+                      <div class="flex justify-between text-sm"><span>Yangın</span><span id="r-fire">0%</span></div>
+                      <div class="w-full bg-slate-200 h-4 rounded mt-1 overflow-hidden"><div id="bar-fire" class="h-4 rounded bg-green-500" style="width:0%"></div></div>
+                    </div>
+                    <div>
+                      <div class="flex justify-between text-sm"><span>Heyelan</span><span id="r-landslide">0%</span></div>
+                      <div class="w-full bg-slate-200 h-4 rounded mt-1 overflow-hidden"><div id="bar-landslide" class="h-4 rounded bg-green-500" style="width:0%"></div></div>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+              <aside>
+                <h4 class="font-semibold">Geçmiş Analizleriniz</h4>
+                <div id="history" class="mt-3 text-slate-600">Henüz kaydedilmiş analiz yok.</div>
+              </aside>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer class="bg-white border-t mt-12">
+        <div class="max-w-6xl mx-auto px-6 py-6 text-sm text-slate-500">© 2025 Risko — Tüm hakları saklıdır.</div>
+      </footer>
+
+      <script>
+        // Router helpers
+        function show(id){ document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden')); const el=document.getElementById(id); if(el) el.classList.remove('hidden'); }
+        document.querySelectorAll('.nav-link').forEach(a=>a.addEventListener('click', e=>{ e.preventDefault(); const href=a.getAttribute('href').replace('#',''); show(href); window.location.hash=href;}));
+        document.getElementById('cta-analyze').addEventListener('click', e=>{ e.preventDefault(); show('panel'); window.location.hash='panel'; });
+
+        function apiBase(){ return (window.RISKO_CONFIG && window.RISKO_CONFIG.API_BASE_URL) || ''; }
+        function analyzeEndpoint(){ return (window.RISKO_CONFIG && window.RISKO_CONFIG.ENDPOINTS && window.RISKO_CONFIG.ENDPOINTS.RISK_ANALYZE) || '/api/v1/analyze'; }
+
+        async function callAnalyze(body){
+          const res = await fetch(apiBase() + analyzeEndpoint(), { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body) });
+          if(!res.ok){
+            let txt = 'Sunucu hatası';
+            try{ const j = await res.json(); txt = j.detail?.error || j.detail || JSON.stringify(j); }catch(e){}
+            throw new Error(txt);
+          }
+          return await res.json();
+        }
+
+        // Hero analyze
+        document.getElementById('hero-go').addEventListener('click', async ()=>{
+          const addr = document.getElementById('hero-address').value || 'İstanbul';
+          const out = document.getElementById('hero-result'); out.classList.remove('hidden'); out.textContent = 'Analiz yapılıyor...';
+          try{ const data = await callAnalyze({ address: addr }); out.textContent = JSON.stringify(data, null, 2); }catch(e){ out.textContent = 'Analiz başarısız: ' + e.message; }
+        });
+
+        // Panel analyze
+        document.getElementById('panel-analyze-btn').addEventListener('click', async ()=>{
+          const addr = document.getElementById('panel-address').value;
+          const bld = parseInt(document.getElementById('panel-building-age').value || '0', 10) || undefined;
+          if(!addr) return alert('Lütfen adres girin');
+          document.getElementById('analysis-loading').classList.remove('hidden');
+          document.getElementById('analysis-result').classList.add('hidden');
+          try{
+            const data = await callAnalyze({ address: addr, building_age: bld });
+            document.getElementById('analysis-loading').classList.add('hidden');
+            document.getElementById('overall-score').innerText = Math.round(data.overall_risk_score || 0) + '%';
+            const map = {earthquake:['bar-earthquake','r-earthquake'], flood:['bar-flood','r-flood'], fire:['bar-fire','r-fire'], landslide:['bar-landslide','r-landslide']};
+            Object.keys(map).forEach(k=>{
+              const val = Math.round(data[k + '_risk'] || 0);
+              const bar = document.getElementById(map[k][0]);
+              document.getElementById(map[k][1]).innerText = val + '%';
+              bar.style.width = val + '%';
+              bar.className = 'h-4 rounded ' + (val<40 ? 'bg-green-500' : val<70 ? 'bg-yellow-400' : 'bg-red-500');
+            });
+            document.getElementById('analysis-result').classList.remove('hidden');
+          }catch(e){ document.getElementById('analysis-loading').classList.add('hidden'); alert('Analiz başarısız: ' + e.message); }
+        });
+
+        // Initial route
+        (function(){ const initial = window.location.hash ? window.location.hash.replace('#','') : 'anasayfa'; show(initial); })();
+
+        document.getElementById('nav-login').addEventListener('click', e=>{ e.preventDefault(); show('login'); window.location.hash='login'; });
+        document.getElementById('nav-panel').addEventListener('click', e=>{ e.preventDefault(); show('panel'); window.location.hash='panel'; });
+      </script>
+    </body>
+    </html>
+          <aside>
+            <h4 class="font-semibold">Geçmiş Analizleriniz</h4>
+            <div class="mt-3 text-gray-600">Henüz kaydedilmiş analiz yok.</div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+  // Simple SPA router
+  function showSection(id){
+    document.querySelectorAll('main section').forEach(s=>s.classList.add('hidden'));
+    const el = document.getElementById(id);
+    if(el) el.classList.remove('hidden');
+  }
+
+  // Basic navigation hooks
+  document.querySelectorAll('.nav-link').forEach(a=>{
+    a.addEventListener('click',(e)=>{ e.preventDefault(); const href=a.getAttribute('href').replace('#',''); showSection(href); window.location.hash = href; });
+  });
+  document.getElementById('hero-analyze').addEventListener('click',(e)=>{e.preventDefault(); showSection('panel'); window.location.hash='panel';});
+  document.getElementById('hero-plans').addEventListener('click',(e)=>{e.preventDefault(); showSection('fiyatlandirma'); window.location.hash='fiyatlandirma';});
+
+  // Demo hero analyze button calling backend
+  async function callAnalyze(address){
+    const body = { address };
+    const res = await fetch(window.RISKO_CONFIG.API_BASE_URL + window.RISKO_CONFIG.ENDPOINTS.RISK_ANALYZE, {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+    });
+    return res.ok ? await res.json() : null;
+  }
+
+  document.getElementById('hero-do').addEventListener('click', async ()=>{
+    const addr = document.getElementById('hero-address').value || 'İstanbul, Beyoğlu, Galata';
+    document.getElementById('hero-result').classList.remove('hidden');
+    document.getElementById('hero-result').innerHTML = '<div class="text-sm text-gray-600">Analiz yapılıyor...</div>';
+    try{
+      const data = await callAnalyze(addr);
+      if(!data){ document.getElementById('hero-result').innerHTML = '<div class="text-red-500">Analiz başarısız</div>'; return; }
+      document.getElementById('hero-result').innerHTML = `<pre class="text-sm bg-gray-100 p-3 rounded">${JSON.stringify(data,null,2)}</pre>`;
+    }catch(e){ document.getElementById('hero-result').innerHTML = '<div class="text-red-500">Hata</div>'; }
+  });
+
+  // Panel analyze
+  const analyzeBtn = document.getElementById('analyze-btn');
+  analyzeBtn.addEventListener('click', async ()=>{
+    const addr = document.getElementById('panel-address').value;
+    if(!addr) return alert('Lütfen adres girin');
+    document.getElementById('analysis-loading').classList.remove('hidden');
+    document.getElementById('analysis-result').classList.add('hidden');
+    try{
+      const data = await callAnalyze(addr);
+      document.getElementById('analysis-loading').classList.add('hidden');
+      if(!data){ alert('Analiz başarısız'); return; }
+      // set overall
+      document.getElementById('overall-score').innerText = Math.round(data.overall_risk_score || 0) + '%';
+      // set bars
+      const risks = {earthquake: data.earthquake_risk, flood: data.flood_risk, fire: data.fire_risk, landslide: data.landslide_risk};
+      const map = {earthquake:['bar-earthquake','r-earthquake'], flood:['bar-flood','r-flood'], fire:['bar-fire','r-fire'], landslide:['bar-landslide','r-landslide']};
+      Object.keys(map).forEach(k=>{
+        const val = Math.round(risks[k]||0);
+        document.getElementById(map[k][0]).style.width = val + '%';
+        document.getElementById(map[k][1]).innerText = val + '%';
+        const bar = document.getElementById(map[k][0]);
+        bar.className = 'h-3 rounded ' + (val<40? 'bg-green-500' : val<70 ? 'bg-yellow-400' : 'bg-red-500');
+      });
+      document.getElementById('analysis-result').classList.remove('hidden');
+    }catch(e){ document.getElementById('analysis-loading').classList.add('hidden'); alert('Hata: ' + e.message); }
+  });
+
+  // Simple SPA initial route
+  const initial = window.location.hash ? window.location.hash.replace('#','') : 'anasayfa';
+  showSection(initial);
+
+  // Login/Register forms (use RisokAuth if supabase is configured)
+  document.getElementById('login-form').addEventListener('submit', async (e)=>{ e.preventDefault();
+    const email = document.getElementById('login-email').value; const pw = document.getElementById('login-password').value;
+    try{ await window.RiskoAuth.init(); const data = await window.RiskoAuth.login(email,pw); alert('Giriş başarılı'); showSection('panel'); }catch(err){ alert('Giriş başarısız: ' + (err.message||err)); }
+  });
+  document.getElementById('register-form').addEventListener('submit', async (e)=>{ e.preventDefault();
+    const name = document.getElementById('reg-name').value; const email = document.getElementById('reg-email').value; const pw = document.getElementById('reg-password').value;
+    try{ await window.RiskoAuth.init(); await window.RiskoAuth.register(name,email,pw); alert('Kayıt başarılı, lütfen e-postanızı doğrulayın'); }catch(err){ alert('Kayıt başarısız: ' + (err.message||err)); }
+  });
+
+  // Nav login state (toggle) - naive approach
+  async function updateNav(){ try{ await window.RiskoAuth.init(); if(window.RiskoAuth.enabled){ const token = await window.RiskoAuth.getToken(); if(token){ document.getElementById('nav-login').innerText='Panelim'; document.getElementById('nav-login').href='#panel'; document.getElementById('nav-cta').classList.remove('hidden'); return; } } }catch{} document.getElementById('nav-login').innerText='Giriş Yap'; document.getElementById('nav-login').href='#login'; }
+  updateNav();
+
+  </script>
+</body>
+</html>
 <!DOCTYPE html>
 <html lang="tr" da                <div class="loading-logo">
                     <i class="fas fa-shield-alt fa-3x text-white mb-3"></i>

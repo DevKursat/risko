@@ -134,12 +134,19 @@ class RiskoPlatformApp {
     }
 
     async checkAuthentication() {
-        const { DEMO_MODE } = this.config;
-        const storedUser = sessionStorage.getItem('risko_user');
-        const token = localStorage.getItem('risko_access_token');
+    const { DEMO_MODE } = this.config;
+    const storedUser = sessionStorage.getItem('risko_user');
+    let token = localStorage.getItem('risko_access_token');
         if (DEMO_MODE) {
             if (storedUser) this.user = JSON.parse(storedUser);
             return;
+        }
+        if (!token) {
+            try {
+                if (window.RiskoAuth && await window.RiskoAuth.init() && window.RiskoAuth.enabled) {
+                    token = await window.RiskoAuth.getToken();
+                }
+            } catch {}
         }
         if (!token) {
             window.location.href = './login.html';
@@ -182,108 +189,15 @@ class RiskoPlatformApp {
         
         // Load user data
         this.loadUserData();
-        
+
         // Initialize real-time features
         this.initRealTimeFeatures();
-        
+
         // Initialize live data system
         await this.initLiveDataSystem();
-        
+
         // Setup data refresh intervals
         this.setupDataRefresh();
-    }
-
-    setupEventListeners() {
-        // Navigation
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('[data-page]')) {
-                e.preventDefault();
-                const page = e.target.closest('[data-page]').getAttribute('data-page');
-                this.navigateToPage(page);
-            }
-        });
-
-        // Keyboard accessibility for clickable cards/links
-        document.addEventListener('keydown', (e) => {
-            if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('[data-page]')) {
-                e.preventDefault();
-                const page = e.target.closest('[data-page]').getAttribute('data-page');
-                this.navigateToPage(page);
-            }
-        });
-
-        // Theme Toggle
-        const themeToggle = document.getElementById('theme-toggle');
-        if (themeToggle) {
-            themeToggle.addEventListener('click', () => {
-                this.toggleTheme();
-            });
-        }
-
-        // Logout
-        document.getElementById('logout-btn')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.logout();
-        });
-
-        // Window resize for charts
-        window.addEventListener('resize', () => {
-            this.handleResize();
-        });
-
-        // Premium dropdown scroll fix - HER DROPDOWN İÇİN
-        const dropdowns = document.querySelectorAll('.nav-item.dropdown .nav-link.dropdown-toggle');
-        dropdowns.forEach(dropdown => {
-            const menu = dropdown.parentElement?.querySelector('.dropdown-menu');
-            if (menu) {
-                dropdown.addEventListener('show.bs.dropdown', () => {
-                    document.body.style.overflow = 'hidden';
-                });
-                dropdown.addEventListener('hide.bs.dropdown', () => {
-                    document.body.style.overflow = '';
-                });
-            }
-        });
-
-        // Dropdown item navigation
-        document.addEventListener('click', (e) => {
-            const dropdownItem = e.target.closest('.dropdown-item[data-page]');
-            if (dropdownItem) {
-                e.preventDefault();
-                const page = dropdownItem.getAttribute('data-page');
-                if (page) {
-                    this.navigateToPage(page);
-                    
-                    // Close dropdown
-                    const dropdown = dropdownItem.closest('.dropdown');
-                    if (dropdown) {
-                        const trigger = dropdown.querySelector('[data-bs-toggle="dropdown"]');
-                        if (trigger) {
-                            const bsDropdown = bootstrap.Dropdown.getInstance(trigger);
-                            if (bsDropdown) {
-                                bsDropdown.hide();
-                            }
-                        }
-                    }
-                }
-            }
-        });
-
-        // User account actions
-        const logoutBtn = document.getElementById('logout-btn');
-        if (logoutBtn) {
-            logoutBtn.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.handleLogout();
-            });
-        }
-
-        // Auto refresh data every 5 minutes
-        setInterval(() => {
-            if (this.currentPage === 'dashboard') {
-                this.refreshDashboardData();
-            }
-        }, 300000);
     }
 
     handleLogout() {
@@ -1576,21 +1490,28 @@ Ankara Çankaya
                 building_age: document.getElementById('building-age').value
             };
 
-            // Get coordinates from address
-            const coordinates = await this.getCoordinatesFromAddress(analysisData.address);
-            
-            if (!coordinates) {
-                throw new Error('Adres koordinatları alınamadı');
-            }
-
-            // Perform real risk analysis with Turkish data sources
-            const result = await this.apiClient.getTurkishRiskData({
-                lat: coordinates.lat,
-                lng: coordinates.lng,
+            // Call backend analyze endpoint
+            const payload = {
                 address: analysisData.address,
-                building_type: analysisData.building_type,
-                building_age: analysisData.building_age
-            });
+                building_age: analysisData.building_age ? Number(analysisData.building_age) : undefined
+            };
+
+            const backendResult = await this.apiClient.analyzeRisk(payload);
+
+            // Map backend response (RiskScoreResponse) to frontend expected shape
+            const result = {
+                address: backendResult.address,
+                latitude: backendResult.latitude,
+                longitude: backendResult.longitude,
+                overall_score: Math.round((backendResult.overall_risk_score || backendResult.overall_score || 0)),
+                risk_breakdown: {
+                    earthquake: Math.round(backendResult.earthquake_risk || 0),
+                    flood: Math.round(backendResult.flood_risk || 0),
+                    fire: Math.round(backendResult.fire_risk || 0),
+                    landslide: Math.round(backendResult.landslide_risk || 0)
+                },
+                recommendations: []
+            };
             
             // Show results
             this.displayAnalysisResults(result);
@@ -2025,45 +1946,21 @@ Ankara Çankaya
         const mapElement = document.getElementById('risk-map');
         if (!mapElement) return;
 
-        // Initialize Leaflet map with fallback tile providers
+        // Initialize Leaflet map using backend-configured provider
         this.map = L.map('risk-map').setView([39.9334, 32.8597], 6);
-        
-        // Try multiple tile providers for better reliability
-        const tileProviders = [
-            {
-                url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                attribution: '© OpenStreetMap contributors'
-            },
-            {
-                url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-                attribution: '© OpenStreetMap contributors, © CARTO'
-            },
-            {
-                url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
-                attribution: '© Esri'
+        try {
+            const res = await fetch(`${this.config.API_BASE_URL}/config/map`);
+            let tileUrl = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+            let attribution = '© OpenStreetMap contributors';
+            if (res.ok) {
+                const mcfg = await res.json();
+                if (mcfg.tile_url) tileUrl = mcfg.tile_url;
+                if (mcfg.attribution) attribution = mcfg.attribution;
             }
-        ];
-
-        let tileLayer = null;
-        for (const provider of tileProviders) {
-            try {
-                tileLayer = L.tileLayer(provider.url, {
-                    attribution: provider.attribution,
-                    maxZoom: 18,
-                    timeout: 5000 // 5 second timeout
-                });
-                tileLayer.addTo(this.map);
-                break; // If successful, break the loop
-            } catch (error) {
-                console.warn(`Tile provider failed: ${provider.url}`, error);
-                continue; // Try next provider
-            }
-        }
-
-        if (!tileLayer) {
-            console.error('All tile providers failed, using basic map');
-            // Fallback to a simple colored background
-            this.map.getContainer().style.backgroundColor = '#e5e5e5';
+            L.tileLayer(tileUrl, { attribution, maxZoom: 18 }).addTo(this.map);
+        } catch (error) {
+            console.warn('Using OSM default tiles due to config error', error);
+            L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap contributors', maxZoom: 18 }).addTo(this.map);
         }
 
         // Store markers for dynamic updates
@@ -3279,8 +3176,8 @@ class APIClient {
     }
 
     async analyzeRisk(data) {
-        // Real analysis with Turkish data sources
-        return await this.request('/risk/analyze', {
+        // Call centralized backend analyze endpoint (MVP)
+        return await this.request('/analyze', {
             method: 'POST',
             body: JSON.stringify(data)
         });

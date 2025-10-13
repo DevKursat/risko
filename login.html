@@ -286,6 +286,9 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js"></script>
     <script src="./config.js"></script>
+    <!-- Supabase JS (optional, for Supabase Auth mode) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="./supabase-client.js"></script>
     
     <script>
         const CFG = window.RISKO_CONFIG || { API_BASE_URL: 'http://localhost:8000', DEMO_MODE: false };
@@ -311,37 +314,36 @@
             });
 
             try {
+                // Supabase Auth mode
+                if (window.RiskoAuth && await window.RiskoAuth.init() && window.RiskoAuth.enabled) {
+                    await window.RiskoAuth.login(email, password);
+                    const access = await window.RiskoAuth.getToken();
+                    if (!access) throw new Error('Token alınamadı');
+                    localStorage.setItem('risko_access_token', access);
+                    const meResp = await fetch(`${CFG.API_BASE_URL}/api/v1/auth/me`, { headers: { 'Authorization': `Bearer ${access}` } });
+                    if (!meResp.ok) throw new Error('Kullanıcı bilgisi alınamadı');
+                    const me = await meResp.json();
+                    sessionStorage.setItem('risko_user', JSON.stringify(me));
+                    Swal.fire({ icon: 'success', title: 'Giriş Başarılı!', timer: 900, showConfirmButton: false })
+                        .then(() => window.location.href = './app.html');
+                    return;
+                }
+
+                // Backend-local auth fallback
                 const body = new URLSearchParams();
                 body.append('username', email);
                 body.append('password', password);
-
                 const resp = await fetch(`${CFG.API_BASE_URL}/api/v1/auth/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body
+                    method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body
                 });
-
-                if (!resp.ok) {
-                    const errText = await resp.text().catch(()=> '');
-                    throw new Error('Giriş başarısız: ' + errText);
-                }
-
+                if (!resp.ok) { const errText = await resp.text().catch(()=> ''); throw new Error('Giriş başarısız: ' + errText); }
                 const tokens = await resp.json();
-                const access = tokens.access_token;
-                const refresh = tokens.refresh_token;
-
-                localStorage.setItem('risko_access_token', access);
-                localStorage.setItem('risko_refresh_token', refresh || '');
-
-                const meResp = await fetch(`${CFG.API_BASE_URL}/api/v1/auth/me`, {
-                    headers: { 'Authorization': `Bearer ${access}` }
-                });
+                const access = tokens.access_token; const refresh = tokens.refresh_token;
+                localStorage.setItem('risko_access_token', access); localStorage.setItem('risko_refresh_token', refresh || '');
+                const meResp = await fetch(`${CFG.API_BASE_URL}/api/v1/auth/me`, { headers: { 'Authorization': `Bearer ${access}` } });
                 if (!meResp.ok) throw new Error('Kullanıcı bilgisi alınamadı');
-                const me = await meResp.json();
-                sessionStorage.setItem('risko_user', JSON.stringify(me));
-
-                Swal.fire({ icon: 'success', title: 'Giriş Başarılı!', timer: 900, showConfirmButton: false })
-                    .then(() => window.location.href = './app.html');
+                const me = await meResp.json(); sessionStorage.setItem('risko_user', JSON.stringify(me));
+                Swal.fire({ icon: 'success', title: 'Giriş Başarılı!', timer: 900, showConfirmButton: false }).then(() => window.location.href = './app.html');
             } catch (err) {
                 console.error(err);
                 Swal.fire({ icon: 'error', title: 'Giriş Hatası', text: 'E-posta veya şifre hatalı' });
