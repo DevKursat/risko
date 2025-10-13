@@ -49,23 +49,22 @@
       try{
         const cfg = window.RISKO_CONFIG || { API_BASE_URL: 'http://localhost:8000' };
         if (window.RiskoAuth && await window.RiskoAuth.init() && window.RiskoAuth.enabled) {
+          // Supabase will send an email with a link that contains an access token or a redirect to reset.html
           await window.RiskoAuth.requestPasswordReset(email, cfg.FRONTEND_BASE_URL || undefined);
+          Swal.fire({icon:'success',title:'E-posta gönderildi',text:'Eğer hesabınız varsa, şifre sıfırlama bağlantısı e-posta ile iletilecektir.'});
         } else {
           const res = await fetch(`${cfg.API_BASE_URL}/api/v1/auth/password-reset/request`,{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ email }) });
           if(!res.ok) throw new Error('failed');
-        }
-        const data = await res.json();
-        if(data.reset_token){
-          // Geliştirme ortamında token döner; kullanıcıyı reset sayfasına yönlendir
-          const url = `./reset.html?token=${encodeURIComponent(data.reset_token)}`;
-          Swal.fire({icon:'success',title:'E-posta gönderildi',text:'Şifre sıfırlama bağlantısı oluşturuldu.',timer:1200,showConfirmButton:false}).then(()=>{
-            window.location.href = url;
-          });
-        } else {
-          // Prod ortamı: e-posta gönderildi bilgisi ver
-          Swal.fire({icon:'success',title:'E-posta gönderildi',text:'Eğer hesabınız varsa, şifre sıfırlama bağlantısı e-posta ile iletilecektir.'});
+          const data = await res.json();
+          if(data.reset_token){
+            const url = `./reset.html?token=${encodeURIComponent(data.reset_token)}`;
+            Swal.fire({icon:'success',title:'E-posta gönderildi',text:'Şifre sıfırlama bağlantısı oluşturuldu.',timer:1200,showConfirmButton:false}).then(()=>{ window.location.href = url; });
+          } else {
+            Swal.fire({icon:'success',title:'E-posta gönderildi',text:'Eğer hesabınız varsa, şifre sıfırlama bağlantısı e-posta ile iletilecektir.'});
+          }
         }
       }catch(err){
+        console.error(err);
         Swal.fire({icon:'error',title:'Hata',text:'İşlem sırasında bir sorun oluştu.'});
       }
     }

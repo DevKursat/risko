@@ -66,17 +66,22 @@
       Swal.fire({title:'İşleniyor...',allowOutsideClick:false,showConfirmButton:false,willOpen:()=>Swal.showLoading()});
       try{
         const cfg = window.RISKO_CONFIG || { API_BASE_URL: 'http://localhost:8000' };
-        if (window.RiskoAuth && await window.RiskoAuth.init() && window.RiskoAuth.enabled) {
-          await window.RiskoAuth.updatePassword(password);
-        } else {
-          const res = await fetch(`${cfg.API_BASE_URL}/api/v1/auth/password-reset/confirm`,{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token, password }) });
-          if(!res.ok) throw new Error('failed');
+        // If Supabase used email link that included access_token in hash or query, exchange already done in client init
+        await window.RiskoAuth.init();
+        // If the session exists, update password directly
+        const token = await window.RiskoAuth.getToken();
+        if (token) {
+          await window.RiskoAuth.updatePassword(p1);
+          Swal.fire({icon:'success',title:'Şifre güncellendi',text:'Giriş sayfasına yönlendiriliyorsunuz...',timer:1500,showConfirmButton:false}).then(()=>{ window.location.href = './login.html'; });
+          return;
         }
-        Swal.fire({icon:'success',title:'Şifre güncellendi',text:'Giriş sayfasına yönlendiriliyorsunuz...',timer:1500,showConfirmButton:false}).then(()=>{
-          window.location.href = './login.html';
-        });
+        // Fallback: call backend endpoint if available (self-hosted)
+        const res = await fetch(`${cfg.API_BASE_URL}/api/v1/auth/password-reset/confirm`,{ method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token, password: p1 }) });
+        if(!res.ok) throw new Error('failed');
+        Swal.fire({icon:'success',title:'Şifre güncellendi',text:'Giriş sayfasına yönlendiriliyorsunuz...',timer:1500,showConfirmButton:false}).then(()=>{ window.location.href = './login.html'; });
       }catch(err){
-        Swal.fire({icon:'error',title:'İşlem başarısız',text:'Bağlantı geçersiz veya süresi dolmuş olabilir.'});
+        console.error(err);
+        Swal.fire({icon:'error',title:'İşlem başarısız',text: (err && err.message) ? err.message : 'Bağlantı geçersiz veya süresi dolmuş olabilir.'});
       }
     }
   </script>
