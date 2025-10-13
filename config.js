@@ -1,14 +1,22 @@
 // Risko Configuration (unified for all environments)
+//
+// This file centralizes frontend configuration for development and production.
+// - For local development (docker-compose) the frontend will automatically
+//   use the backend at http://localhost:8000 so the app works "out of the box".
+// - In production you should override `window.RISKO_CONFIG.API_BASE_URL` via
+//   your deployment environment or set a different value here before build.
+// - This file will NOT prompt the user for any values. Interactive prompts
+//   caused confusion and have been removed to ensure consistent developer UX.
 (function(){
-    const getParam = (key) => {
-        try { return new URLSearchParams(window.location.search).get(key); } catch { return null; }
-    };
+    const getParam = (key) => { try { return new URLSearchParams(window.location.search).get(key); } catch { return null; } };
+    // Respect an explicitly set localStorage value or query param when present,
+    // but do NOT prompt the user. Default to the local development backend.
     let storedApi = (typeof localStorage !== 'undefined') ? localStorage.getItem('risko_api_base') : null;
-    // Query param ile geçici ayar (api veya api_base)
     const qp = getParam('api') || getParam('api_base');
     if (!storedApi && qp && /^https?:\/\//i.test(qp)) {
         try { localStorage.setItem('risko_api_base', qp); storedApi = qp; } catch {}
     }
+    // Default development API base (matches docker-compose dev backend)
     const defaultApi = storedApi || 'http://localhost:8000';
     window.RISKO_CONFIG = {
         // API Configuration
@@ -77,28 +85,23 @@
         ENVIRONMENT: 'production'
     };
 
-    // Auto-detect environment (DEMO_MODE stays false)
+    // Auto-detect environment (DEMO_MODE stays false). No interactive prompts.
     const hostname = window.location.hostname;
     if (hostname.includes('github.io')) {
         window.RISKO_CONFIG.ENVIRONMENT = 'github-pages';
-        // Eğer API_BASE_URL hâlâ localhost ise kullanıcıdan alın
-        if (!storedApi) {
-            try {
-                const promptApi = window.prompt('Risko API adresini girin (https://api.sizin-domaininiz.com):');
-                if (promptApi && /^https?:\/\//i.test(promptApi)) {
-                    localStorage.setItem('risko_api_base', promptApi);
-                    window.RISKO_CONFIG.API_BASE_URL = promptApi;
-                }
-            } catch {}
-        }
-        console.log('🚀 Risko Platform GitHub Pages üzerinde (gerçek API)');
+        // Do not prompt on GitHub Pages. Prefer an explicitly configured API base.
+        if (storedApi) window.RISKO_CONFIG.API_BASE_URL = storedApi;
+        console.log('🚀 Risko Platform GitHub Pages (no prompt)');
     } else if (hostname === 'localhost' || hostname === '127.0.0.1') {
         window.RISKO_CONFIG.FEATURES.DEBUG_MODE = true;
         window.RISKO_CONFIG.ENVIRONMENT = 'development';
+        // For local development we default to the docker-compose backend port
         window.RISKO_CONFIG.API_BASE_URL = defaultApi;
-        console.log('🛠️ Risko Platform geliştirme modunda (gerçek API)');
+        console.log('🛠️ Risko Platform development (API -> ' + window.RISKO_CONFIG.API_BASE_URL + ')');
     } else {
         window.RISKO_CONFIG.ENVIRONMENT = 'production';
-        console.log('🌟 Risko Platform production modunda');
+        // For production rely on the configured API_BASE_URL (default may be localhost)
+        if (storedApi) window.RISKO_CONFIG.API_BASE_URL = storedApi;
+        console.log('🌟 Risko Platform production (no prompt)');
     }
 })();
