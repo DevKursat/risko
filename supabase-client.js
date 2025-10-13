@@ -8,11 +8,11 @@
   };
 
   async function fetchAuthConfig(){
-    // Supabase yapılandırmasını doğrudan kullan
+    // Supabase yapılandırmasını doğrudan kullan (kullanıcı tarafından sağlandı)
     return {
       auth_provider: 'supabase',
-      supabase_url: 'https://your-backend-url.com',
-      supabase_anon_key: 'your-anon-key'
+      supabase_url: 'https://dhbgmwkvoxnjzyskthba.supabase.co',
+      supabase_anon_key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRoYmdtd2t2b3huanp5c2t0aGJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwMzQ4NjksImV4cCI6MjA3NTYxMDg2OX0.kqxV3hbYDTo-fQQhXqp1OziB0bBymAqhDJn97s6piy0'
     };
   }
 
