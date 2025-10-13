@@ -2467,7 +2467,13 @@ Ankara Çankaya
         // Simulate real-time updates
         if (!this.config.DEMO_MODE) {
             // Connect to WebSocket for real-time updates
-            this.connectWebSocket();
+            // Call connectWebSocket only if implemented; otherwise use a safe no-op
+            if (typeof this.connectWebSocket === 'function') {
+                try { this.connectWebSocket(); } catch (e) { console.warn('WebSocket connect failed:', e); }
+            } else {
+                // Provide a lightweight stub so other code can rely on its existence
+                this.connectWebSocket = function(){ console.info('connectWebSocket stub: real-time disabled or not implemented'); };
+            }
         }
     }
 
