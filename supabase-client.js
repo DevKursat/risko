@@ -8,12 +8,12 @@
   };
 
   async function fetchAuthConfig(){
-    const url = `${CFG.API_BASE_URL}/api/v1/auth/config`;
-    try {
-      const res = await fetch(url);
-      if (!res.ok) return null;
-      return await res.json();
-    } catch { return null; }
+    // Supabase yapılandırmasını doğrudan kullan
+    return {
+      auth_provider: 'supabase',
+      supabase_url: 'https://your-backend-url.com',
+      supabase_anon_key: 'your-anon-key'
+    };
   }
 
   async function exchangeFromUrl(client){
