@@ -48,6 +48,20 @@ EOF
         run: |
           echo "site contains:" && ls -la site | sed -n '1,200p'
 
+      - name: Debug: show runtime config and masks
+        run: |
+          echo "--- DEBUG: runtime config ---"
+          echo "SUPABASE_URL='${SUPABASE_URL:-<<not-set>>}'"
+          # show anon key length instead of full value
+          if [ -n "${SUPABASE_ANON_KEY:-}" ]; then
+            echo -n "SUPABASE_ANON_KEY length: " && echo -n "${SUPABASE_ANON_KEY}" | wc -c
+          else
+            echo "SUPABASE_ANON_KEY=<<not-set>>"
+          fi
+          echo "--- site/config.js preview (first 20 lines) ---"
+          if [ -f site/config.js ]; then sed -n '1,20p' site/config.js; else echo 'site/config.js not found'; fi
+          echo "--- end debug ---"
+
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v3
         with:
