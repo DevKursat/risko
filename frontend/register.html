@@ -82,35 +82,11 @@
             Swal.fire({ title: 'Hesap oluşturuluyor...', allowOutsideClick: false, showConfirmButton: false, didOpen: () => Swal.showLoading() });
 
             try {
-                const cfg = window.RISKO_CONFIG || { DEMO_MODE: false, API_BASE_URL: 'http://localhost:8000' };
-                // Gerçek API çağrısı
-                const res = await fetch(`${cfg.API_BASE_URL}/api/v1/auth/register`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, password })
-                });
-                if (!res.ok) throw new Error('register failed');
-                // Otomatik giriş
-                const body = new URLSearchParams();
-                body.append('username', email);
-                body.append('password', password);
-                const loginRes = await fetch(`${cfg.API_BASE_URL}/api/v1/auth/login`, {
-                    method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body
-                });
-                if (!loginRes.ok) throw new Error('login failed');
-                const token = await loginRes.json();
-                localStorage.setItem('risko_access_token', token.access_token);
-                localStorage.setItem('risko_refresh_token', token.refresh_token || '');
-                // Kullanıcı bilgisini çek ve oturumu hazırla
-                const meRes = await fetch(`${cfg.API_BASE_URL}/api/v1/auth/me`, { headers: { 'Authorization': `Bearer ${token.access_token}` } });
-                if (meRes.ok){
-                    const me = await meRes.json();
-                    sessionStorage.setItem('risko_user', JSON.stringify(me));
-                }
+                const data = await window.RiskoAuth.register(name, email, password);
                 Swal.fire({ icon: 'success', title: 'Kayıt başarılı', text: 'Uygulamaya yönlendiriliyorsunuz...', timer: 1000, showConfirmButton: false })
                 .then(() => window.location.href = './app.html');
             } catch (e) {
-                Swal.fire({ icon: 'error', title: 'Kayıt başarısız', text: 'Sunucuya ulaşılamıyor veya e-posta kullanımda.' });
+                Swal.fire({ icon: 'error', title: 'Kayıt başarısız', text: e.message || 'Bir hata oluştu.' });
             }
         }
     </script>
