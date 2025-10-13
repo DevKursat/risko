@@ -9,7 +9,7 @@
     if (!stored && qp && /^https?:\/\//i.test(qp)) {
         try { localStorage.setItem('risko_api_base', qp); stored = qp; } catch {}
     }
-    let defaultApi = stored || 'http://localhost:8000';
+    let defaultApi = stored || 'https://your-backend-url.com';
     window.RISKO_CONFIG = {
         // API Configuration
         API_BASE_URL: defaultApi, // Prod: burayı kendi API domaininize ayarlayın veya localStorage 'risko_api_base' kullanın
