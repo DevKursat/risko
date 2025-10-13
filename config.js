@@ -26,6 +26,10 @@
     window.RISKO_CONFIG = {
         // API Configuration
         API_BASE_URL: defaultApi,
+        // Supabase configuration (embedded from supplied values)
+        // NOTE: This anon key is public-facing client key. Do NOT add service-role keys here.
+        supabase_url: 'https://dhbgmwkvoxnjzyskthba.supabase.co',
+        supabase_anon_key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRoYmdtd2t2b3huanp5c2t0aGJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwMzQ4NjksImV4cCI6MjA3NTYxMDg2OX0.kqxV3hbYDTo-fQQhXqp1OziB0bBymAqhDJn97s6piy0',
 
         // Demo Mode (always off for real functionality)
         DEMO_MODE: false,
