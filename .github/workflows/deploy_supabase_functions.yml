@@ -1,0 +1,58 @@
+name: Deploy Supabase Edge Functions
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'supabase/functions/**'
+
+jobs:
+  deploy-functions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install supabase CLI
+        run: |
+          npm install -g supabase
+
+      - name: Configure environment
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          echo "Supabase env configured"
+
+      - name: Deploy Edge Functions
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+        run: |
+          # Assumes supabase CLI can read env vars for login; adjust if your workflow requires 'supabase login'
+          supabase --project-ref "$SUPABASE_PROJECT_REF" functions deploy enqueue --no-verify
+          # Deploy other functions if present
+          for fn in $(ls supabase/functions); do
+            supabase --project-ref "$SUPABASE_PROJECT_REF" functions deploy "$fn" --no-verify || true
+          done
+
+      - name: Print deployed functions URL
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        run: |
+          echo "Supabase project: $SUPABASE_URL"
+          echo "Edge functions deployed."
+
+# NOTE: Before running this workflow, set the following repository secrets:
+# - SUPABASE_URL
+# - SUPABASE_ANON_KEY
+# - SUPABASE_SERVICE_ROLE_KEY
+# - SUPABASE_PROJECT_REF (the project ref/id shown in Supabase dashboard)

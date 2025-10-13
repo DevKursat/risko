@@ -1,0 +1,62 @@
+name: Build and Deploy Cloud Run
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'cloud-run-worker/**'
+      - '.github/workflows/deploy_cloud_run.yml'
+
+permissions:
+  contents: read
+  id-token: write
+  packages: write
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v1
+        with:
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ secrets.GHCR_USERNAME }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Build and push image to GHCR
+        uses: docker/build-push-action@v4
+        with:
+          context: ./cloud-run-worker
+          push: true
+          tags: ghcr.io/${{ secrets.GHCR_USERNAME }}/risko-worker:latest
+
+      - name: Deploy to Cloud Run
+        run: |
+          IMAGE=ghcr.io/${{ secrets.GHCR_USERNAME }}/risko-worker:latest
+          REGION=${{ secrets.GCP_REGION }}
+          SERVICE_NAME=${{ secrets.CLOUD_RUN_SERVICE_NAME }}
+          # Deploy using gcloud
+          gcloud run deploy "$SERVICE_NAME" --image "$IMAGE" --region "$REGION" --platform managed --allow-unauthenticated --project ${{ secrets.GCP_PROJECT_ID }}
+        env:
+          CLOUDSDK_CORE_PROJECT: ${{ secrets.GCP_PROJECT_ID }}
+
+# Required secrets for this workflow:
+# - GHCR_USERNAME (your GitHub username or org)
+# - GHCR_TOKEN (personal access token with write:packages scope)
+# - GCP_PROJECT_ID
+# - GCP_REGION
+# - GCP_SA_KEY (JSON key for a service account with Cloud Run deploy permissions)
+# - CLOUD_RUN_SERVICE_NAME
+

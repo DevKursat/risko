@@ -28,10 +28,12 @@
         API_BASE_URL: defaultApi,
         // Indicate auth provider so frontend picks up Supabase config
         auth_provider: 'supabase',
-        // Supabase configuration (embedded from supplied values)
-        // NOTE: This anon key is public-facing client key. Do NOT add service-role keys here.
-        supabase_url: 'https://dhbgmwkvoxnjzyskthba.supabase.co',
-        supabase_anon_key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRoYmdtd2t2b3huanp5c2t0aGJhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjAwMzQ4NjksImV4cCI6MjA3NTYxMDg2OX0.kqxV3hbYDTo-fQQhXqp1OziB0bBymAqhDJn97s6piy0',
+    // Supabase configuration (in production this should be injected at deploy time)
+    // NOTE: Do NOT commit secrets (service-role keys) to the repository. The
+    // public anon key is safe for client usage but we still prefer injecting
+    // both values via CI runtime config (see .github/workflows/deploy_github_pages.yml).
+    supabase_url: '',
+    supabase_anon_key: '',
 
         // Demo Mode (always off for real functionality)
         DEMO_MODE: false,
