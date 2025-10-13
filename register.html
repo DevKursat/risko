@@ -107,14 +107,29 @@
                 // Try Supabase first
                 if (window.RiskoAuth) await window.RiskoAuth.init();
                 if (window.RiskoAuth && window.RiskoAuth.enabled) {
+                    // Register then immediately attempt to sign in using the same credentials.
                     await window.RiskoAuth.register(name, email, password);
-                    await window.RiskoAuth.login(email, password);
-                    const access = await window.RiskoAuth.getToken();
-                    if (!access) throw new Error('Token alınamadı');
-                    localStorage.setItem('risko_access_token', access);
-                    Swal.fire({ icon: 'success', title: 'Kayıt başarılı', text: 'Uygulamaya yönlendiriliyorsunuz...', timer: 1000, showConfirmButton: false })
-                        .then(() => window.location.href = './app.html');
-                    return;
+                    try {
+                        const loginRes = await window.RiskoAuth.login(email, password);
+                        // loginRes should contain session and user when successful
+                        const access = loginRes?.session?.access_token || await window.RiskoAuth.getToken();
+                        const refresh = loginRes?.session?.refresh_token || '';
+                        if (!access) {
+                            // If no token available, inform the user (possible email confirmation requirement)
+                            Swal.fire({ icon: 'info', title: 'Kayıt tamamlandı', text: 'Lütfen e-posta adresinizi onaylayın. Onay sonrası giriş yapılabilir.' });
+                            return;
+                        }
+                        localStorage.setItem('risko_access_token', access);
+                        localStorage.setItem('risko_refresh_token', refresh);
+                        sessionStorage.setItem('risko_user', JSON.stringify(loginRes.user || {}));
+                        Swal.fire({ icon: 'success', title: 'Kayıt başarılı', text: 'Uygulamaya yönlendiriliyorsunuz...', timer: 1000, showConfirmButton: false })
+                            .then(() => window.location.href = './app.html');
+                        return;
+                    } catch (e) {
+                        console.error('Otomatik giriş başarısız:', e);
+                        Swal.fire({ icon: 'info', title: 'Kayıt tamamlandı', text: 'Hesap oluşturuldu. Lütfen e-posta onayını kontrol edin veya giriş sayfasından giriş yapın.' });
+                        return;
+                    }
                 }
 
                 // If Supabase not enabled, only fall back to backend if API_BASE_URL is explicitly configured
