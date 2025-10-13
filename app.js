@@ -3186,12 +3186,19 @@ Ankara Çankaya
  */
 class APIClient {
     constructor() {
-        this.baseURL = window.RISKO_CONFIG?.API_BASE_URL || 'http://localhost:8000';
+        // Do not default to localhost for GitHub Pages; require explicit API_BASE_URL to enable backend calls.
+        this.baseURL = window.RISKO_CONFIG?.API_BASE_URL || '';
         this.demoMode = window.RISKO_CONFIG?.DEMO_MODE || false;
     }
 
     async request(endpoint, options = {}) {
         if (this.demoMode) {
+            return this.getDemoData(endpoint);
+        }
+
+        // If baseURL is not configured, avoid network calls from static site and use demo data instead.
+        if (!this.baseURL) {
+            console.warn('API baseURL not configured; using demo data for', endpoint);
             return this.getDemoData(endpoint);
         }
 
@@ -3210,7 +3217,12 @@ class APIClient {
 
             return await response.json();
         } catch (error) {
-            console.error('API request failed:', error);
+            // Provide more informative messages for CORS/mixed-content and connection refused
+            if (error instanceof TypeError) {
+                console.error('API request failed (TypeError, likely network/CORS/mixed-content):', error.message);
+            } else {
+                console.error('API request failed:', error);
+            }
             // Fallback to demo data
             return this.getDemoData(endpoint);
         }
