@@ -66,6 +66,9 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.0/dist/sweetalert2.all.min.js"></script>
+    <script src="./config.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js/dist/umd/supabase.min.js"></script>
+    <script src="../supabase-client.js"></script>
     <script>
         async function handleRegister(event){
             event.preventDefault();
@@ -82,7 +85,14 @@
             Swal.fire({ title: 'Hesap oluşturuluyor...', allowOutsideClick: false, showConfirmButton: false, didOpen: () => Swal.showLoading() });
 
             try {
-                const data = await window.RiskoAuth.register(name, email, password);
+                // Register then auto-login to obtain session
+                await window.RiskoAuth.register(name, email, password);
+                const login = await window.RiskoAuth.login(email, password).catch(()=>null);
+                if (login?.session?.access_token) {
+                    localStorage.setItem('risko_access_token', login.session.access_token);
+                    localStorage.setItem('risko_refresh_token', login.session.refresh_token || '');
+                    sessionStorage.setItem('risko_user', JSON.stringify(login.user || {}));
+                }
                 Swal.fire({ icon: 'success', title: 'Kayıt başarılı', text: 'Uygulamaya yönlendiriliyorsunuz...', timer: 1000, showConfirmButton: false })
                 .then(() => window.location.href = './app.html');
             } catch (e) {

@@ -63,16 +63,21 @@
       }
       Swal.fire({title:'İşleniyor...',allowOutsideClick:false,showConfirmButton:false,willOpen:()=>Swal.showLoading()});
       try{
-        const cfg = window.RISKO_CONFIG || { API_BASE_URL:'http://localhost:8000' };
-        const res = await fetch(`${cfg.API_BASE_URL}/api/v1/auth/password-reset/confirm`,{
-          method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ token, password:p1 })
-        });
-        if(!res.ok) throw new Error('reset failed');
-        Swal.fire({icon:'success',title:'Şifre güncellendi',text:'Giriş sayfasına yönlendiriliyorsunuz...',timer:1500,showConfirmButton:false}).then(()=>{
-          window.location.href = './login.html';
-        });
+        // Use Supabase to update password via magic link token
+        await window.RiskoAuth.init();
+        if (!window.RiskoAuth || !window.RiskoAuth.getToken) throw new Error('Auth not initialized');
+        // Supabase JS v2 supports exchangeCodeForSession or updateUser; here we rely on serverless flow: redirect with access token
+        const updated = await window.RiskoAuth.updatePassword(p1).catch(()=>null);
+        if (updated) {
+          Swal.fire({icon:'success',title:'Şifre güncellendi',text:'Giriş sayfasına yönlendiriliyorsunuz...',timer:1500,showConfirmButton:false}).then(()=>{
+            window.location.href = './login.html';
+          });
+        } else {
+          throw new Error('Şifre güncellenemedi');
+        }
       }catch(err){
-        Swal.fire({icon:'error',title:'İşlem başarısız',text:'Bağlantı geçersiz veya süresi dolmuş olabilir.'});
+        console.error(err);
+        Swal.fire({icon:'error',title:'İşlem başarısız',text: err.message || 'Bağlantı geçersiz veya süresi dolmuş olabilir.'});
       }
     }
   </script>
