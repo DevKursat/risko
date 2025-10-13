@@ -17,7 +17,12 @@
         try { localStorage.setItem('risko_api_base', qp); storedApi = qp; } catch {}
     }
     // Default development API base (matches docker-compose dev backend)
-    const defaultApi = storedApi || 'http://localhost:8000';
+    // IMPORTANT: when served from GitHub Pages we must NOT default to localhost
+    // because that causes pages to attempt connections to the developer's
+    // machine (ERR_CONNECTION_REFUSED). Instead default to empty and require
+    // an explicit API_BASE_URL when on GitHub Pages.
+    const hostname = (typeof window !== 'undefined' && window.location && window.location.hostname) ? window.location.hostname : '';
+    const defaultApi = storedApi || (hostname.includes('github.io') ? '' : 'http://localhost:8000');
     window.RISKO_CONFIG = {
         // API Configuration
         API_BASE_URL: defaultApi,
@@ -86,11 +91,15 @@
     };
 
     // Auto-detect environment (DEMO_MODE stays false). No interactive prompts.
-    const hostname = window.location.hostname;
+    // Auto-detect environment and avoid defaulting to localhost on github.io
     if (hostname.includes('github.io')) {
         window.RISKO_CONFIG.ENVIRONMENT = 'github-pages';
-        // Do not prompt on GitHub Pages. Prefer an explicitly configured API base.
-        if (storedApi) window.RISKO_CONFIG.API_BASE_URL = storedApi;
+        // Do not set API_BASE_URL to localhost on GitHub Pages; prefer explicit config
+        if (storedApi) {
+            window.RISKO_CONFIG.API_BASE_URL = storedApi;
+        } else {
+            window.RISKO_CONFIG.API_BASE_URL = '';
+        }
         console.log('🚀 Risko Platform GitHub Pages (no prompt)');
     } else if (hostname === 'localhost' || hostname === '127.0.0.1') {
         window.RISKO_CONFIG.FEATURES.DEBUG_MODE = true;
