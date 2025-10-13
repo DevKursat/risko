@@ -1,0 +1,52 @@
+name: Deploy site to GitHub Pages (secure Supabase config)
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare publish directory
+        run: |
+          rm -rf site || true
+          mkdir site
+          # copy site files (adjust if your frontend lives in a different folder)
+          rsync -av --exclude='backend' --exclude='.git' --exclude='.github' --exclude='__pycache__' --exclude='node_modules' ./ site/
+
+      - name: Generate runtime config (config.js) from secrets
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          API_BASE_URL: ${{ secrets.API_BASE_URL }}
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+            echo "ERROR: SUPABASE_URL and SUPABASE_ANON_KEY must be set as repository secrets." >&2
+            exit 1
+          fi
+          cat > site/config.js <<'EOF'
+window.RISKO_CONFIG = {
+  auth_provider: 'supabase',
+  supabase_url: "${SUPABASE_URL}",
+  supabase_anon_key: "${SUPABASE_ANON_KEY}",
+  API_BASE_URL: "${API_BASE_URL:-}"
+};
+EOF
+
+      - name: Show small listing
+        run: |
+          echo "site contains:" && ls -la site | sed -n '1,200p'
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./site
+          publish_branch: gh-pages
+          keep_files: false
