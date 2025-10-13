@@ -32,6 +32,4 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    conn = op.get_bind()
-    if conn.dialect.has_table(conn, 'analyses'):
-        op.drop_table('analyses')
+    op.drop_table('analyses')

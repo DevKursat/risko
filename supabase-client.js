@@ -65,6 +65,49 @@
     return data?.session?.access_token || null;
   }
 
+  async function handleAuthStateChange(event, session) {
+    const analysisHistorySection = document.getElementById('analysis-history');
+    const historyContainer = document.getElementById('history-container');
+
+    if (event === 'SIGNED_IN') {
+      analysisHistorySection.style.display = 'block';
+      const token = session.access_token;
+      try {
+        const response = await fetch(`${CFG.API_BASE_URL}/api/v1/analyses/me`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        if (response.ok) {
+          const analyses = await response.json();
+          historyContainer.innerHTML = '';
+          if (analyses.length === 0) {
+            historyContainer.innerHTML = '<p>Daha önce hiç analiz yapmadınız.</p>';
+          } else {
+            analyses.forEach(analysis => {
+              const item = document.createElement('div');
+              item.className = 'list-group-item';
+              item.innerHTML = `
+                <h5>${analysis.address}</h5>
+                <p>Risk Skoru: ${analysis.overall_risk_score || 'N/A'}</p>
+                <small>${new Date(analysis.created_at).toLocaleString()}</small>
+              `;
+              historyContainer.appendChild(item);
+            });
+          }
+        } else {
+          console.error('Failed to fetch analyses:', response.statusText);
+        }
+      } catch (error) {
+        console.error('Error fetching analyses:', error);
+      }
+    } else if (event === 'SIGNED_OUT') {
+      analysisHistorySection.style.display = 'none';
+      historyContainer.innerHTML = '';
+    }
+  }
+
   window.RiskoAuth = {
     get enabled(){ return state.enabled; },
     init,
@@ -103,4 +146,7 @@
     },
     getToken,
   };
+
+  // Attach the listener to Supabase auth state changes
+  state.client.auth.onAuthStateChange(handleAuthStateChange);
 })();

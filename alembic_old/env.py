@@ -14,9 +14,15 @@ fileConfig(config.config_file_name)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
-from backend.app.db.session import Base
-from backend.app.models.analysis import Analysis
+from app.db.session import Base
 # Ensure models are imported so they are registered on the Base.metadata for autogenerate
+# Prefer importing backend-specific module path to avoid duplicate top-level app package imports
+try:
+    from backend.app.models.analysis import Analysis  # noqa: F401
+except Exception:
+    from app.models.analysis import Analysis  # noqa: F401
+
+
 target_metadata = Base.metadata
 
 
@@ -29,23 +35,16 @@ def run_migrations_offline():
 
 
 def run_migrations_online():
-    # Projemizin DATABASE_URL ortam değişkenini okuması için eklenen bölüm
-    config = context.config
-    db_url = os.getenv("DATABASE_URL")
-    if db_url:
-        config.set_main_option("sqlalchemy.url", db_url)
-    # --- Bitiş ---
-
+    configuration = config.get_section(config.config_ini_section)
+    configuration['sqlalchemy.url'] = configuration.get('sqlalchemy.url') or os.environ.get('DATABASE_URL')
     connectable = engine_from_config(
-        config.get_section(config.config_ini_section),
-        prefix="sqlalchemy.",
+        configuration,
+        prefix='sqlalchemy.',
         poolclass=pool.NullPool,
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

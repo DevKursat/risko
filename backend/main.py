@@ -82,7 +82,7 @@ async def log_requests(request: Request, call_next):
 # Include routers (preserve existing functionality)
 app.include_router(risk.router, prefix=f"{settings.API_V1_STR}/risk", tags=["Risk Analysis"])
 app.include_router(analyze_router.router, prefix=f"{settings.API_V1_STR}", tags=["Analyze"])
-app.include_router(analyses_router.router, prefix=f"{settings.API_V1_STR}", tags=["Analyses"])
+app.include_router(analyses_router.router, prefix=f"{settings.API_V1_STR}/analyses", tags=["Analyses"])
 app.include_router(b2b.router, prefix=f"{settings.API_V1_STR}/b2b", tags=["B2B API"])
 app.include_router(auth_routes.router, prefix=f"{settings.API_V1_STR}/auth", tags=["Auth"])
 
