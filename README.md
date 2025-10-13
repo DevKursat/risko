@@ -21,8 +21,6 @@ Technologies: Python, FastAPI, SQLAlchemy, PostgreSQL (PostGIS optional), Alembi
 ## Quick local development
 
 Prerequisites:
-- Docker & Docker Compose
-- Git
 
 1. Copy environment template and edit secrets locally (do not commit):
 
@@ -37,15 +35,12 @@ cp .env.example .env
 docker compose up --build
 ```
 
+> Note on real external data: When deploying the frontend to GitHub Pages, direct browser calls to some external APIs (AFAD, Kandilli, OpenWeather, etc.) may be blocked due to CORS or mixed-content (HTTP vs HTTPS). To enable real external data in production, deploy the backend and set `API_BASE_URL` (via your Pages deployment secrets) to the backend URL. The backend exposes server-side proxy endpoints under `/api/v1/proxy/*` which the frontend will use to fetch AFAD, Kandilli and weather data securely.
+
 Notes:
-- We provide `docker-compose.override.yml` for local development. It bind-mounts your repository into the backend container and starts Uvicorn with `--reload` so code changes are reflected immediately.
-- Backend entrypoint will apply migrations if `APPLY_MIGRATIONS=true` in your `.env`.
 
 3. Visit the app and API docs:
 
-- Frontend: http://localhost:8000
-- API docs: http://localhost:8000/docs
-- Health: http://localhost:8000/health
 
 ---
 
