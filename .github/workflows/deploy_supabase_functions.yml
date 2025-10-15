@@ -20,7 +20,16 @@ jobs:
 
       - name: Install supabase CLI
         run: |
-          npm install -g supabase
+          # Install the Supabase CLI. The official package name has changed across releases;
+          # try the scoped package first, fall back to the older name, otherwise use npx as last resort.
+          set -e
+          if npm view @supabase/cli >/dev/null 2>&1; then
+            npm install -g @supabase/cli
+          elif npm view supabase >/dev/null 2>&1; then
+            npm install -g supabase
+          else
+            echo "Warning: could not find supabase package in npm registry, will attempt to use npx when invoking commands"
+          fi
 
       - name: Configure environment
         env:
