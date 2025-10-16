@@ -17,10 +17,15 @@ jobs:
         with:
           node-version: 18
 
-      - name: Copy index.html to deploy folder
+      - name: Copy frontend files to deploy folder
         run: |
           mkdir -p out
-          cp index.html out/index.html
+          # If frontend directory exists, copy its contents (preferred demo)
+          if [ -d "frontend" ]; then
+            cp -R frontend/* out/
+          else
+            cp index.html out/index.html
+          fi
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
