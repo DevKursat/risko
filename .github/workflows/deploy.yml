@@ -5,31 +5,30 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  pages: write
+
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node (for potential frontend tooling)
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
-      - name: Copy frontend files to deploy folder
+      - name: Prepare deploy folder
         run: |
           mkdir -p out
-          # If frontend directory exists, copy its contents (preferred demo)
           if [ -d "frontend" ]; then
             cp -R frontend/* out/
           else
             cp index.html out/index.html
           fi
 
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Upload artifact for GitHub Pages
+        uses: actions/upload-pages-artifact@v1
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./out
-          publish_branch: gh-pages
+          path: ./out
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v1
