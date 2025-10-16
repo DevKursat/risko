@@ -1,9 +1,12 @@
 from fastapi import APIRouter, HTTPException, Header, Depends
 from typing import Optional, List
+from sqlalchemy.orm import Session
+from app.db.session import get_db
 from app.schemas.risk import AddressInput, RiskScoreResponse, DetailedRiskReport
 from app.services.risk_calculator import risk_service
 from app.services.recommendations import recommendation_service
 from app.core.config import settings
+from app.models.analysis import Analysis
 
 router = APIRouter()
 
@@ -24,7 +27,8 @@ async def verify_api_key(x_api_key: Optional[str] = Header(None)):
 @router.post("/batch-analyze", response_model=List[RiskScoreResponse])
 async def batch_analyze(
     addresses: List[AddressInput],
-    api_key: str = Depends(verify_api_key)
+    api_key: str = Depends(verify_api_key),
+    db: Session = Depends(get_db)
 ):
     """
     Batch analysis for multiple addresses (B2B API).
@@ -36,8 +40,16 @@ async def batch_analyze(
     results = []
     
     for address_input in addresses:
-        result = risk_service.analyze_address(address_input.address)
+        result = risk_service.analyze_address(address_input.address, address_input.building_age)
         if 'error' not in result:
+            # Save each result
+            try:
+                record = Analysis(user_id=None, address=result.get('address') or address_input.address, risk_scores=result)
+                db.add(record)
+                db.commit()
+                db.refresh(record)
+            except Exception:
+                pass
             results.append(RiskScoreResponse(**result))
     
     return results

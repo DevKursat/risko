@@ -1,5 +1,35 @@
 # Byte-compiled / optimized / DLL files
 __pycache__/
+*.py[cod]
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# Environment files
+.env
+.env.*
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Test / coverage
+.pytest_cache/
+.coverage
+
+# Editor directories
+.vscode/
+
+# macOS
+.DS_Store
+
+# Docker overrides
+docker-compose.override.yml
+# Byte-compiled / optimized / DLL files
+__pycache__/
 *.py[codz]
 *$py.class
 

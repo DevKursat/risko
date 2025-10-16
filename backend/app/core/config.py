@@ -74,4 +74,40 @@ class Settings(BaseSettings):
     WEATHERBIT_API_KEY: Optional[str] = None
 
 
-settings = Settings()
+# Use a tolerant runtime settings object built from environment variables. pydantic's
+# Settings() can fail during import when docker-compose provides non-JSON serialised
+# list values via env_file; to keep container startup reliable, construct settings
+# from environment with graceful fallbacks.
+import os
+from types import SimpleNamespace
+import json
+
+def _safe_list_from_env(name, default=None):
+    v = os.environ.get(name)
+    if v is None:
+        return default or []
+    v = v.strip()
+    try:
+        parsed = json.loads(v)
+        if isinstance(parsed, list):
+            return parsed
+    except Exception:
+        pass
+    return [p.strip() for p in v.strip('[]').split(',') if p.strip()]
+
+settings = SimpleNamespace(
+    PROJECT_NAME=os.environ.get('PROJECT_NAME', 'Risko Platform'),
+    VERSION=os.environ.get('VERSION', '1.0.0'),
+    API_V1_STR=os.environ.get('API_V1_STR', '/api/v1'),
+    ENVIRONMENT=os.environ.get('ENVIRONMENT', 'development'),
+    LOG_LEVEL=os.environ.get('LOG_LEVEL', 'INFO'),
+    SECRET_KEY=os.environ.get('SECRET_KEY', 'changeme'),
+    ALLOWED_HOSTS=_safe_list_from_env('ALLOWED_HOSTS', ['*']),
+    CORS_ORIGINS=_safe_list_from_env('CORS_ORIGINS', ['*']),
+    DATABASE_URL=os.environ.get('DATABASE_URL'),
+    B2B_API_KEYS=_safe_list_from_env('B2B_API_KEYS', []),
+    MAP_PROVIDER=os.environ.get('MAP_PROVIDER', 'leaflet'),
+    TILE_URL=os.environ.get('TILE_URL', 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'),
+    NOMINATIM_URL=os.environ.get('NOMINATIM_URL', 'https://nominatim.openstreetmap.org'),
+    MAPTILER_API_KEY=os.environ.get('MAPTILER_API_KEY')
+)

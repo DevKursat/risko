@@ -39,6 +39,8 @@ docker compose up --build
 
 Notes:
 
+- The frontend single-page demo is available under `/app/index.html` when the backend is running and serving static files.
+
 3. Visit the app and API docs:
 
 

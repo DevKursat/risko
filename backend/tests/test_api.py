@@ -1,4 +1,40 @@
 import pytest
+from httpx import AsyncClient
+from fastapi import status
+
+
+@pytest.mark.asyncio
+async def test_health_check():
+    from app.main import app
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        resp = await ac.get("/health")
+    assert resp.status_code == status.HTTP_200_OK
+    data = resp.json()
+    assert data.get("status") == "healthy"
+
+
+@pytest.mark.asyncio
+async def test_risk_analysis_success():
+    from app.main import app
+    payload = {"address": "Ankara, Çankaya"}
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        resp = await ac.post("/api/v1/risk/analyze", json=payload)
+    assert resp.status_code == status.HTTP_200_OK
+    data = resp.json()
+    # Expected keys
+    assert "address" in data
+    assert "overall_risk_score" in data
+    assert "risk_level" in data
+
+
+@pytest.mark.asyncio
+async def test_risk_analysis_invalid_input():
+    from app.main import app
+    payload = {"location": "test"}
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        resp = await ac.post("/api/v1/risk/analyze", json=payload)
+    assert resp.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+import pytest
 from fastapi.testclient import TestClient
 import sys
 import os

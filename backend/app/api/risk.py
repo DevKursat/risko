@@ -1,5 +1,8 @@
 from fastapi import APIRouter, HTTPException, Header, Depends
 from typing import Optional
+from sqlalchemy.orm import Session
+from app.db.session import get_db
+from app.models.analysis import Analysis
 from app.schemas.risk import (
     AddressInput, 
     RiskScoreResponse, 
@@ -14,53 +17,58 @@ router = APIRouter()
 
 # Public endpoints (Freemium)
 @router.post("/analyze", response_model=RiskScoreResponse)
-async def analyze_address(address_input: AddressInput):
+async def analyze_address(address_input: AddressInput, db: Session = Depends(get_db)):
     """
     Analyze risk for a given address (Free tier - basic risk score).
     Returns overall risk score and individual risk scores.
     """
-    result = risk_service.analyze_address(address_input.address)
-    
+    result = risk_service.analyze_address(address_input.address, address_input.building_age)
+
     if 'error' in result:
         raise HTTPException(status_code=404, detail=result['error'])
-    
+
+    # Persist analysis to DB (MVP: user_id is None for public analyses)
+    try:
+        record = Analysis(user_id=None, address=result.get('address') or address_input.address, risk_scores=result)
+        db.add(record)
+        db.commit()
+        db.refresh(record)
+    except Exception:
+        # On DB failure, continue returning result but log is handled by global handler
+        pass
+
     return RiskScoreResponse(**result)
 
 
 @router.post("/analyze/detailed", response_model=DetailedRiskReport)
-async def get_detailed_report(address_input: AddressInput):
+async def get_detailed_report(address_input: AddressInput, db: Session = Depends(get_db)):
     """
     Get detailed risk report with recommendations and analysis (Premium feature).
     Includes personalized recommendations and detailed analysis.
     """
-    result = risk_service.analyze_address(address_input.address)
-    
+    # For MVP premium endpoint: return basic analysis plus a static placeholder message
+    result = risk_service.analyze_address(address_input.address, address_input.building_age)
+
     if 'error' in result:
         raise HTTPException(status_code=404, detail=result['error'])
-    
+
+    # Save to DB
+    try:
+        record = Analysis(user_id=None, address=result.get('address') or address_input.address, risk_scores=result)
+        db.add(record)
+        db.commit()
+        db.refresh(record)
+    except Exception:
+        pass
+
     risk_score = RiskScoreResponse(**result)
-    
-    recommendations = recommendation_service.get_recommendations(
-        result['earthquake_risk'],
-        result['flood_risk'],
-        result['fire_risk'],
-        result['landslide_risk']
-    )
-    
-    analysis = recommendation_service.get_analysis(
-        result['earthquake_risk'],
-        result['flood_risk'],
-        result['fire_risk'],
-        result['landslide_risk']
-    )
-    
-    prevention_tips = recommendation_service.get_prevention_tips()
-    
+
+    # Return a minimal detailed report for now (full premium features coming soon)
     return DetailedRiskReport(
         risk_score=risk_score,
-        recommendations=recommendations,
-        analysis=analysis,
-        prevention_tips=prevention_tips
+        recommendations=[],
+        analysis={"note": "Detaylı rapor ve önleyici analizler yakında bu bölümde yer alacak."},
+        prevention_tips=["Detaylı öneriler yakında eklenecek."]
     )
 
 
