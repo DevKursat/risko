@@ -14,6 +14,28 @@
       /* Minimal additional styles for better visuals */
       .gradient-hero{background:linear-gradient(135deg,#0f172a 0%, #4f46e5 100%);}
       .glass{backdrop-filter: blur(6px); background-color: rgba(255,255,255,0.6);}
+      .fade-in{opacity:0; transform:translateY(8px); transition:opacity .6s ease, transform .6s ease}
+      .fade-in-visible{opacity:1; transform:none}
+      
+      /* Simple dark-mode overrides for common Tailwind utilities used in the page.
+        This keeps dark styling consistent without editing every class. */
+      .dark body, .dark main { background: #0b1220 !important; color: #e6eef8 !important; }
+      .dark .bg-white { background-color: #0b1220 !important; }
+      .dark .text-slate-900 { color: #e6eef8 !important; }
+      .dark .text-slate-600 { color: #94a3b8 !important; }
+      .dark .text-slate-500 { color: #94a3b8 !important; }
+      .dark .bg-slate-50 { background-color: #071023 !important; }
+      .dark .bg-slate-200 { background-color: #132034 !important; }
+      .dark .border-slate-200 { border-color: rgba(255,255,255,0.06) !important; }
+      .dark .shadow-lg { box-shadow: 0 10px 30px rgba(2,6,23,0.6) !important; }
+
+      /* Mouse follower */
+      #cursor-follower{position:fixed;left:0;top:0;pointer-events:none;width:120px;height:120px;border-radius:50%;mix-blend-mode:screen;transform:translate(-50%,-50%) scale(.15);transition:transform .15s ease, opacity .2s;opacity:.9;z-index:9999;background:radial-gradient(circle at 30% 30%, rgba(79,70,229,0.35), rgba(6,182,212,0.15) 40%, transparent 60%);} 
+      .cta-fancy{background:linear-gradient(90deg,#4f46e5,#06b6d4);box-shadow:0 8px 24px rgba(79,70,229,0.14);color:white}
+      .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.06)}
+
+      /* Polished PDF table style in print preview (if shown) */
+      .report-table td, .report-table th{padding:6px 8px;border-bottom:1px solid rgba(0,0,0,0.06)}
     </style>
   </head>
     <body class="antialiased bg-slate-50 text-slate-900" data-theme="light">
@@ -165,6 +187,25 @@
         if(toggle){ toggle.addEventListener('click', ()=>{ const dark = root.classList.toggle('dark'); localStorage.setItem('risko:theme', dark ? 'dark' : 'light'); updateIcon(); }); updateIcon(); }
       })();
 
+      // Cursor follower
+      (function(){
+        const f = document.createElement('div'); f.id = 'cursor-follower'; document.body.appendChild(f);
+        let lastX = 0, lastY = 0, lastScale = .15;
+        document.addEventListener('mousemove', (e)=>{ lastX = e.clientX; lastY = e.clientY; f.style.left = lastX + 'px'; f.style.top = lastY + 'px'; f.style.transform = 'translate(-50%,-50%) scale(1)'; clearTimeout(f._t); f._t = setTimeout(()=>{ f.style.transform = 'translate(-50%,-50%) scale(.15)'; }, 1200); });
+        // make follower subtle on mobile/touch
+        document.addEventListener('touchstart', ()=>{ f.style.display = 'none'; });
+      })();
+
+      // Wire header login/register buttons to SPA anchors
+      (function(){
+        const bLogin = document.getElementById('btn-login');
+        const bReg = document.getElementById('btn-register');
+        if(bLogin) bLogin.addEventListener('click', (e)=>{ e.preventDefault(); show('login'); window.location.hash='login'; });
+        if(bReg) bReg.addEventListener('click', (e)=>{ e.preventDefault(); show('register'); window.location.hash='register'; });
+        // make contact-sales fancier
+        const sales = document.getElementById('contact-sales'); if(sales){ sales.classList.add('cta-fancy'); sales.addEventListener('mouseover', ()=> sales.style.transform='translateY(-3px)'); sales.addEventListener('mouseout', ()=> sales.style.transform='none'); }
+      })();
+
       // Simple fade-in on scroll for elements with data-animate
       (function(){
         const io = new IntersectionObserver((entries)=>{ entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('fade-in-visible'); }); }, {threshold:0.15});
@@ -184,9 +225,19 @@
       }; }
 
       // PDF and CSV export helpers
-      async function downloadPDF(data){ try{ const { jsPDF } = window.jspdf; const doc = new jsPDF(); doc.setFontSize(14); doc.text('Risko — Test Risk Raporu', 14, 20); doc.setFontSize(11); doc.text('Adres: ' + (data.address||''), 14, 32); doc.text('Genel Puan: ' + (Math.round(data.overall_risk_score||0)) + '%', 14, 40); doc.text('Not: Test verisidir.', 14, 250); doc.save('risko_test_report.pdf'); }catch(e){ alert('PDF oluşturulamadı: ' + e.message); } }
-      function downloadCSV(data){ const rows = [['label','value'], ['overall', data.overall_risk_score], ['earthquake', data.earthquake_risk], ['flood', data.flood_risk], ['fire', data.fire_risk], ['landslide', data.landslide_risk]]; const csv = rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'); const blob = new Blob([csv], {type:'text/csv'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'risko_test_report.csv'; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 500);
-      }
+    async function downloadPDF(data){ try{ const { jsPDF } = window.jspdf; const doc = new jsPDF({unit:'pt', format:'a4'});
+      doc.setFillColor(15,23,42); doc.rect(0,0,595,842,'F'); doc.setTextColor(255,255,255);
+      doc.setFontSize(20); doc.text('Risko — Test Risk Raporu', 40, 60);
+      doc.setFontSize(12); doc.text('Adres: ' + (data.address||''), 40, 90);
+      doc.text('Genel Puan: ' + (Math.round(data.overall_risk_score||0)) + '%', 40, 110);
+      doc.setDrawColor(255,255,255); doc.setLineWidth(0.5); doc.line(40,120,555,120);
+      // small table
+      const rows = [ ['Risk','Puan'], ['Deprem', data.earthquake_risk], ['Sel', data.flood_risk], ['Yangın', data.fire_risk], ['Heyelan', data.landslide_risk] ];
+      let y = 140; doc.setFillColor(255,255,255,0.03); doc.setFontSize(11);
+      rows.forEach((r, idx)=>{ doc.text(String(r[0]), 60, y); doc.text(String(r[1]) + '%', 480, y); y += 18; });
+      doc.setFontSize(10); doc.text('Not: Bu rapor test verisini gösterir. Gerçek veriler API entegrasyonunda farklılık gösterebilir.', 40, y+20);
+      doc.save('risko_test_report.pdf'); }catch(e){ alert('PDF oluşturulamadı: ' + e.message); } }
+    function downloadCSV(data){ const rows = [['label','value'], ['overall', data.overall_risk_score], ['earthquake', data.earthquake_risk], ['flood', data.flood_risk], ['fire', data.fire_risk], ['landslide', data.landslide_risk]]; const csv = rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'); const blob = new Blob([csv], {type:'text/csv'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'risko_test_report.csv'; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 500); }
 
       // Try to call backend; if not available show mock but label it as TEST
       async function callAnalyzeSafe(body){ try{ const res = await fetch(API_BASE + ANALYZE_PATH, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)}); if(res.ok){ const j = await res.json(); j._from = 'api'; return j; } }catch(e){ /* ignore */ } const m = mockResult(body.address); m._from = 'mock'; m.address = body.address; return m; }
