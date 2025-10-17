@@ -36,6 +36,17 @@
 
       /* Polished PDF table style in print preview (if shown) */
       .report-table td, .report-table th{padding:6px 8px;border-bottom:1px solid rgba(0,0,0,0.06)}
+  /* Dark-mode input & small control tweaks (non-invasive) */
+  input, textarea, select {transition: background .18s, color .18s, border-color .18s}
+  .dark input, .dark textarea, .dark select, .dark .form-control { background: #071127 !important; color: #e6eef8 !important; border-color: rgba(255,255,255,0.06) !important; }
+  .dark input::placeholder, .dark textarea::placeholder { color: #8f9fb3 !important; }
+  /* Export button neutral styles */
+  .btn-export{background:#f1f5f9;color:#071022;border-radius:8px;padding:6px 10px;border:1px solid rgba(15,23,42,0.04)}
+  .dark .btn-export{background:#0b1220;color:#dbe9ff;border:1px solid rgba(255,255,255,0.04)}
+  /* Nav button small polish */
+  .nav-btn{padding:6px 10px;border-radius:8px;font-weight:600}
+  .nav-btn.primary{background:linear-gradient(90deg,#4f46e5,#06b6d4);color:white}
+  .nav-btn.ghost{background:transparent;border:1px solid rgba(15,23,42,0.06);color:inherit}
     </style>
   </head>
     <body class="antialiased bg-slate-50 text-slate-900" data-theme="light">
@@ -81,7 +92,7 @@
             </div>
             <div class="mt-8 text-sm text-slate-500">Kurumsal & Bireysel çözümler — API erişimi sağlanır.</div>
           </div>
-          <div class="bg-white p-6 rounded-lg shadow">
+    <div class="bg-white p-4 rounded-lg shadow">
             <label class="block text-sm text-slate-600">Adres</label>
             <div class="mt-2 flex gap-2">
               <input id="hero-address" class="flex-1 border rounded px-3 py-2" placeholder="İstanbul, Beyoğlu, Galata...">
@@ -96,7 +107,7 @@
           <h2 class="text-2xl font-bold">Paketler</h2>
           <p class="mt-2 text-slate-600">İhtiyacınıza uygun planı seçin.</p>
           <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-white p-6 rounded-lg shadow">
+            <div class="bg-white p-4 rounded-lg shadow">
               <h3 class="font-semibold">Bireysel</h3>
               <div class="mt-4 text-3xl font-extrabold">Ücretsiz</div>
               <ul class="mt-4 text-sm text-slate-600 space-y-2">
