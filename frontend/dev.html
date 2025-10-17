@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Risko — Dev Playground</title>
+  <style>
+    body{font-family:system-ui,Segoe UI,Roboto,Arial;margin:0;background:#0b1220;color:#e6eef8}
+    .toolbar{padding:12px;display:flex;gap:8px;align-items:center}
+    button{padding:8px 12px;border-radius:8px;border:0;background:#4f46e5;color:white;cursor:pointer}
+    iframe{width:100%;height:calc(100vh - 56px);border:0}
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <button id="btn-theme">Toggle Theme</button>
+    <input id="sample-addr" placeholder="Örn: İstanbul, Beyoğlu" style="padding:8px;border-radius:8px;border:0;flex:1" />
+    <button id="btn-run">Run Sample</button>
+  </div>
+  <iframe id="demo" src="/frontend/index.html"></iframe>
+  <script>
+    const iframe = document.getElementById('demo');
+    document.getElementById('btn-theme').addEventListener('click', ()=>{
+      iframe.contentWindow.postMessage({type:'toggle-theme'}, '*');
+    });
+    document.getElementById('btn-run').addEventListener('click', ()=>{
+      const addr = document.getElementById('sample-addr').value || 'İstanbul, Beyoğlu';
+      iframe.contentWindow.postMessage({type:'run-sample', address: addr}, '*');
+    });
+  </script>
+</body>
+</html>
