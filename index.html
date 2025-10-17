@@ -29,10 +29,16 @@
       .dark .border-slate-200 { border-color: rgba(255,255,255,0.06) !important; }
       .dark .shadow-lg { box-shadow: 0 10px 30px rgba(2,6,23,0.6) !important; }
 
-      /* Mouse follower */
-      #cursor-follower{position:fixed;left:0;top:0;pointer-events:none;width:120px;height:120px;border-radius:50%;mix-blend-mode:screen;transform:translate(-50%,-50%) scale(.15);transition:transform .15s ease, opacity .2s;opacity:.9;z-index:9999;background:radial-gradient(circle at 30% 30%, rgba(79,70,229,0.35), rgba(6,182,212,0.15) 40%, transparent 60%);} 
-      .cta-fancy{background:linear-gradient(90deg,#4f46e5,#06b6d4);box-shadow:0 8px 24px rgba(79,70,229,0.14);color:white}
+  /* Mouse follower (smaller & subtler) */
+  #cursor-follower{position:fixed;left:0;top:0;pointer-events:none;width:64px;height:64px;border-radius:50%;mix-blend-mode:screen;transform:translate(-50%,-50%) scale(.2);transition:transform .18s cubic-bezier(.2,.9,.2,1), opacity .18s;opacity:.85;z-index:9999;background:radial-gradient(circle at 30% 30%, rgba(79,70,229,0.28), rgba(6,182,212,0.12) 40%, transparent 60%);} 
+  .cta-fancy{background:linear-gradient(90deg,#4f46e5,#06b6d4);box-shadow:0 10px 30px rgba(2,6,23,0.45);color:white}
       .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.06)}
+
+  /* Button press/ripple */
+  .btn-press{transition:transform .12s ease, box-shadow .12s ease}
+  .btn-press:active{transform:translateY(2px) scale(.995)}
+  .ripple{position:absolute;border-radius:50%;transform:scale(0);animation:ripple .6s linear;opacity:.35;background:radial-gradient(circle,#ffffff,#ffffff);} 
+  @keyframes ripple{to{transform:scale(4);opacity:0}} 
 
       /* Polished PDF table style in print preview (if shown) */
       .report-table td, .report-table th{padding:6px 8px;border-bottom:1px solid rgba(0,0,0,0.06)}
@@ -148,17 +154,20 @@
           </div>
         </div>
 
-        <div class="bg-gradient-to-br from-white to-slate-50 p-6 rounded-lg shadow-lg border dark:bg-gradient-to-br dark:from-slate-800 dark:to-slate-900">
-          <div class="flex items-start gap-4">
-            <div class="w-14 h-14 rounded-lg bg-gradient-to-br from-brand to-accent text-white flex items-center justify-center shadow-lg transform -translate-y-2">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="opacity-90"><path d="M3 7h18M3 12h18M3 17h18"/></svg>
-            </div>
-            <div>
-              <h3 class="text-lg font-semibold">Kurumsal Müşteriler (B2B)</h3>
-              <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Sigorta şirketleri ve bankalar için toplu analiz API'si, SLA ve kurumsal destek. Deneme sürecinde tam özelliklerle gösterilmektedir.</p>
-              <div class="mt-4">
-                <button class="px-4 py-2 bg-brand text-white rounded shadow" id="contact-sales">Satış Ekibiyle İletişime Geç</button>
-              </div>
+        <div class="bg-white p-6 rounded-xl shadow transition-all duration-300 hover:scale-[1.01] dark:bg-slate-800 dark:shadow-lg">
+          <div class="p-6 bg-gradient-to-br from-slate-800 to-brand text-white rounded-lg">
+            <h3 class="text-xl font-semibold">Kurumsal Çözümler</h3>
+            <p class="mt-2 text-sm">Toplu analiz API'si, SLA, veri entegrasyonları ve kurumlara özel raporlar.</p>
+          </div>
+          <div class="p-6 bg-white dark:bg-slate-800 rounded-b-lg">
+            <h4 class="font-semibold">Kurumsal Özellikler</h4>
+            <ul class="mt-3 text-sm text-slate-600 dark:text-slate-300 space-y-2">
+              <li>• Toplu analiz (API)</li>
+              <li>• SLA sözleşmeleri ve destek</li>
+              <li>• Özelleştirilmiş raporlama</li>
+            </ul>
+            <div class="mt-4">
+              <button id="contact-sales" class="px-4 py-2 rounded cta-fancy">Satış Ekibiyle İletişime Geç</button>
             </div>
           </div>
         </div>
@@ -187,16 +196,20 @@
         if(toggle){ toggle.addEventListener('click', ()=>{ const dark = root.classList.toggle('dark'); localStorage.setItem('risko:theme', dark ? 'dark' : 'light'); updateIcon(); }); updateIcon(); }
       })();
 
-      // Cursor follower
+      // Cursor follower (smaller + click animation)
       (function(){
         const f = document.createElement('div'); f.id = 'cursor-follower'; document.body.appendChild(f);
-        let lastX = 0, lastY = 0, lastScale = .15;
-        document.addEventListener('mousemove', (e)=>{ lastX = e.clientX; lastY = e.clientY; f.style.left = lastX + 'px'; f.style.top = lastY + 'px'; f.style.transform = 'translate(-50%,-50%) scale(1)'; clearTimeout(f._t); f._t = setTimeout(()=>{ f.style.transform = 'translate(-50%,-50%) scale(.15)'; }, 1200); });
-        // make follower subtle on mobile/touch
+        let idleT;
+        document.addEventListener('mousemove', (e)=>{ f.style.left = e.clientX + 'px'; f.style.top = e.clientY + 'px'; f.style.transform = 'translate(-50%,-50%) scale(1)'; clearTimeout(idleT); idleT = setTimeout(()=>{ f.style.transform = 'translate(-50%,-50%) scale(.2)'; }, 900); });
+        // click pulse
+        document.addEventListener('click', (e)=>{
+          f.style.transform = 'translate(-50%,-50%) scale(.9)'; setTimeout(()=> f.style.transform='translate(-50%,-50%) scale(.2)', 180);
+        });
+        // hide on touch devices
         document.addEventListener('touchstart', ()=>{ f.style.display = 'none'; });
       })();
 
-      // Wire header login/register buttons to SPA anchors
+      // Wire header login/register buttons to SPA anchors + add button click animations
       (function(){
         const bLogin = document.getElementById('btn-login');
         const bReg = document.getElementById('btn-register');
@@ -204,6 +217,11 @@
         if(bReg) bReg.addEventListener('click', (e)=>{ e.preventDefault(); show('register'); window.location.hash='register'; });
         // make contact-sales fancier
         const sales = document.getElementById('contact-sales'); if(sales){ sales.classList.add('cta-fancy'); sales.addEventListener('mouseover', ()=> sales.style.transform='translateY(-3px)'); sales.addEventListener('mouseout', ()=> sales.style.transform='none'); }
+        // add generic press animation to buttons
+        document.querySelectorAll('button, .cta-fancy, .btn-ghost').forEach(btn=>{ btn.classList.add('btn-press'); btn.style.position='relative'; btn.addEventListener('click', (ev)=>{
+          // create ripple
+          const r = document.createElement('span'); r.className='ripple'; const rect = btn.getBoundingClientRect(); const size = Math.max(rect.width, rect.height); r.style.width = r.style.height = size + 'px'; r.style.left = (ev.clientX - rect.left - size/2) + 'px'; r.style.top = (ev.clientY - rect.top - size/2) + 'px'; btn.appendChild(r); setTimeout(()=> r.remove(), 700);
+        }); });
       })();
 
       // Simple fade-in on scroll for elements with data-animate
@@ -227,15 +245,20 @@
       // PDF and CSV export helpers
     async function downloadPDF(data){ try{ const { jsPDF } = window.jspdf; const doc = new jsPDF({unit:'pt', format:'a4'});
       doc.setFillColor(15,23,42); doc.rect(0,0,595,842,'F'); doc.setTextColor(255,255,255);
-      doc.setFontSize(20); doc.text('Risko — Test Risk Raporu', 40, 60);
-      doc.setFontSize(12); doc.text('Adres: ' + (data.address||''), 40, 90);
-      doc.text('Genel Puan: ' + (Math.round(data.overall_risk_score||0)) + '%', 40, 110);
+          // draw a simple logo circle + R on the left
+          doc.setFillColor(79,70,229); doc.circle(40, 50, 18, 'F'); doc.setFontSize(14); doc.setTextColor(255,255,255); doc.text('R', 36, 56);
+          doc.setTextColor(255,255,255); doc.setFontSize(18); doc.text('Risko — Test Risk Raporu', 74, 56);
+          doc.setFontSize(11); doc.text('Adres: ' + (data.address||''), 40, 90);
+          doc.text('Genel Puan: ' + (Math.round(data.overall_risk_score||0)) + '%', 40, 108);
       doc.setDrawColor(255,255,255); doc.setLineWidth(0.5); doc.line(40,120,555,120);
       // small table
       const rows = [ ['Risk','Puan'], ['Deprem', data.earthquake_risk], ['Sel', data.flood_risk], ['Yangın', data.fire_risk], ['Heyelan', data.landslide_risk] ];
       let y = 140; doc.setFillColor(255,255,255,0.03); doc.setFontSize(11);
       rows.forEach((r, idx)=>{ doc.text(String(r[0]), 60, y); doc.text(String(r[1]) + '%', 480, y); y += 18; });
-      doc.setFontSize(10); doc.text('Not: Bu rapor test verisini gösterir. Gerçek veriler API entegrasyonunda farklılık gösterebilir.', 40, y+20);
+  doc.setFontSize(10); const note = 'Not: Bu rapor test verisini gösterir. Gerçek veriler API entegrasyonunda farklılık gösterebilir.';
+  // wrap note to fit page
+  const split = doc.splitTextToSize(note, 520);
+  doc.text(split, 40, y+20);
       doc.save('risko_test_report.pdf'); }catch(e){ alert('PDF oluşturulamadı: ' + e.message); } }
     function downloadCSV(data){ const rows = [['label','value'], ['overall', data.overall_risk_score], ['earthquake', data.earthquake_risk], ['flood', data.flood_risk], ['fire', data.fire_risk], ['landslide', data.landslide_risk]]; const csv = rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'); const blob = new Blob([csv], {type:'text/csv'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'risko_test_report.csv'; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 500); }
 
