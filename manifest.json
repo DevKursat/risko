@@ -1,0 +1,33 @@
+{
+    "name": "Risko Platform",
+    "short_name": "Risko",
+    "description": "Türkiye'nin en gelişmiş risk analizi web uygulaması",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#4f46e5",
+    "theme_color": "#4f46e5",
+    "orientation": "portrait-primary",
+    "icons": [
+        {
+            "src": "./favicon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "https://via.placeholder.com/192x192/4f46e5/ffffff?text=R",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "https://via.placeholder.com/512x512/4f46e5/ffffff?text=R",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ],
+    "categories": ["business", "finance", "productivity"],
+    "lang": "tr",
+    "dir": "ltr",
+    "scope": "/",
+    "prefer_related_applications": false
+}

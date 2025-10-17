@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Risko — Adresinizin Risk Puanını Saniyeler İçinde Öğrenin</title>
+    <meta name="description" content="Risko ile deprem, sel, yangın ve heyelan risklerini tek bir yerden analiz edin." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = {theme: {extend: {colors: {brand:'#4f46e5', accent:'#06b6d4'}}}, darkMode: 'class'};</script>
+  <!-- jsPDF for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="icon" href="/favicon.svg">
+    <style>
+      /* Minimal additional styles for better visuals */
+      .gradient-hero{background:linear-gradient(135deg,#0f172a 0%, #4f46e5 100%);}
+      .glass{backdrop-filter: blur(6px); background-color: rgba(255,255,255,0.6);}
+    </style>
+  </head>
+    <body class="antialiased bg-slate-50 text-slate-900" data-theme="light">
+    <header class="py-6">
+      <div class="max-w-5xl mx-auto px-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow"><svg width="20" height="20" viewBox="0 0 24 24" fill="#4f46e5" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7v6c0 5 5 9 10 9s10-4 10-9V7l-10-5z"/></svg></div>
+          <div>
+            <div class="text-lg font-semibold">Risko</div>
+            <div class="text-sm text-slate-500">Türkiye Afet Risk Analiz Platformu (MVP)</div>
+          </div>
+        </div>
+        <nav class="hidden sm:flex gap-4 text-sm text-slate-600 items-center">
+          <a href="#" class="hover:text-slate-900">Ana Sayfa</a>
+          <a href="#" class="hover:text-slate-900">Kurumsal</a>
+          <a href="#" class="hover:text-slate-900">İletişim</a>
+          <button id="btn-login" class="ml-4 px-3 py-1 border rounded text-sm">Giriş</button>
+          <button id="btn-register" class="ml-2 px-3 py-1 bg-brand text-white rounded text-sm">Kayıt</button>
+          <button id="theme-toggle" aria-label="Toggle theme" class="ml-4 p-2 rounded border"><svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path></svg></button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4">
+      <!-- Hero -->
+      <section class="grid md:grid-cols-2 gap-8 items-center mb-12">
+        <div>
+          <h1 class="text-4xl font-extrabold leading-tight text-slate-900">Adresinizin Risk Puanını Saniyeler İçinde Öğrenin</h1>
+          <p class="mt-4 text-slate-600">Risko ile deprem, sel, yangın ve heyelan risklerini tek bir yerden analiz edin.</p>
+
+          <div class="mt-6">
+            <label class="sr-only">Adres</label>
+            <div class="flex gap-2">
+              <input id="address-input" class="w-full px-4 py-3 rounded-lg border border-slate-200 shadow-sm" placeholder="Örn: İstanbul, Beyoğlu, Galata" />
+              <button id="analyze-btn" class="px-5 py-3 rounded-lg bg-brand text-white font-medium shadow">Riski Sorgula</button>
+            </div>
+            <p class="mt-2 text-sm text-slate-500">Ücretsiz temel analiz: hızlı özet. Detaylı raporlar yakında.</p>
+          </div>
+
+          <div id="result-card" class="mt-6 hidden glass rounded-lg p-4 shadow">
+            <div class="flex items-center justify-between">
+              <div>
+                <div class="text-sm text-slate-500">Genel Risk Puanı</div>
+                <div id="overall-score" class="text-3xl font-extrabold mt-1">--</div>
+                <div id="risk-summary" class="mt-2 text-sm text-slate-600"></div>
+              </div>
+              <div class="w-36 h-36 flex items-center justify-center">
+                <svg id="gauge" viewBox="0 0 36 36" class="w-28 h-28"><path d="M2 18a16 16 0 1 1 32 0" fill="none" stroke="#e6e6e6" stroke-width="3" stroke-linecap="round"/><path id="gauge-arc" d="M2 18a16 16 0 1 1 32 0" fill="none" stroke="#4f46e5" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 100"/></svg>
+              </div>
+            </div>
+
+            <div class="mt-4 grid grid-cols-1 gap-3">
+              <div>
+                <div class="flex justify-between text-sm"><span>Deprem</span><span id="earthquake-val">0%</span></div>
+                <div class="w-full bg-slate-200 h-3 rounded mt-1 overflow-hidden"><div id="bar-earthquake" class="h-3 rounded bg-green-500" style="width:0%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm"><span>Sel</span><span id="flood-val">0%</span></div>
+                <div class="w-full bg-slate-200 h-3 rounded mt-1 overflow-hidden"><div id="bar-flood" class="h-3 rounded bg-green-500" style="width:0%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm"><span>Yangın</span><span id="fire-val">0%</span></div>
+                <div class="w-full bg-slate-200 h-3 rounded mt-1 overflow-hidden"><div id="bar-fire" class="h-3 rounded bg-green-500" style="width:0%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between text-sm"><span>Heyelan</span><span id="landslide-val">0%</span></div>
+                <div class="w-full bg-slate-200 h-3 rounded mt-1 overflow-hidden"><div id="bar-landslide" class="h-3 rounded bg-green-500" style="width:0%"></div></div>
+              </div>
+            </div>
+
+            <div class="mt-4 text-sm text-slate-600" id="level-text"></div>
+          </div>
+
+          <div id="loading" class="mt-4 hidden flex items-center gap-3 text-slate-600"><svg class="animate-spin h-5 w-5 text-brand" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path></svg><span>Analiz yapılıyor...</span></div>
+        </div>
+
+        <div class="hidden md:block">
+          <div class="rounded-xl overflow-hidden shadow-lg transform transition-all duration-700 hover:scale-[1.01]">
+            <div class="p-6 bg-gradient-to-br from-slate-800 to-brand text-white">
+              <h3 class="text-xl font-semibold">Risko Nedir?</h3>
+              <p class="mt-3 text-sm">Güncel ve güvenilir risk verisi eksikliği büyük bir sorun. Risko, AFAD, Kandilli gibi kaynaklarla entegrasyon hedefiyle, adres bazlı çoklu risk profilini tek bir raporda sunar.</p>
+            </div>
+            <div class="p-6 bg-white dark:bg-slate-800">
+              <h4 class="font-semibold">Hangi riskleri ölçeriz?</h4>
+              <ul class="mt-3 text-sm text-slate-600 dark:text-slate-300 space-y-2">
+                <li>• Deprem</li>
+                <li>• Sel</li>
+                <li>• Yangın</li>
+                <li>• Heyelan</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pricing & B2B -->
+      <section class="grid md:grid-cols-2 gap-6 mb-12">
+        <div class="bg-white p-6 rounded-lg shadow">
+          <h3 class="text-lg font-semibold">Bireysel Kullanıcılar (Freemium)</h3>
+          <p class="mt-2 text-sm text-slate-600">Ücretsiz temel analiz: özet risk puanı ve kısa öneriler. Detaylı rapor ve geçmiş analizler Premium'da.</p>
+          <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="p-4 border rounded">
+              <div class="text-sm font-medium">Temel Analiz</div>
+              <div class="text-xs text-slate-500 mt-2">Hızlı özet, 5 analiz/ay</div>
+            </div>
+            <div class="p-4 border rounded">
+              <div class="text-sm font-medium">Detaylı Rapor (Premium)</div>
+              <div class="text-xs text-slate-500 mt-2">Öneriler, uzun dönem tahminler. <span class="font-semibold">Yakında</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-white to-slate-50 p-6 rounded-lg shadow-lg border dark:bg-gradient-to-br dark:from-slate-800 dark:to-slate-900">
+          <div class="flex items-start gap-4">
+            <div class="w-14 h-14 rounded-lg bg-gradient-to-br from-brand to-accent text-white flex items-center justify-center shadow-lg transform -translate-y-2">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="opacity-90"><path d="M3 7h18M3 12h18M3 17h18"/></svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold">Kurumsal Müşteriler (B2B)</h3>
+              <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Sigorta şirketleri ve bankalar için toplu analiz API'si, SLA ve kurumsal destek. Deneme sürecinde tam özelliklerle gösterilmektedir.</p>
+              <div class="mt-4">
+                <button class="px-4 py-2 bg-brand text-white rounded shadow" id="contact-sales">Satış Ekibiyle İletişime Geç</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="py-8 text-sm text-slate-500">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>© 2025 Risko — Türkiye Afet Risk Analiz Platformu</div>
+          <div class="flex gap-4">
+            <a href="#" class="hover:text-slate-700">İletişim</a>
+            <a href="#" class="hover:text-slate-700">Gizlilik</a>
+          </div>
+        </div>
+      </footer>
+    </main>
+
+    <script>
+      // Theme handling: persist in localStorage
+      (function(){
+        const root = document.documentElement;
+        const stored = localStorage.getItem('risko:theme');
+        if(stored === 'dark') root.classList.add('dark');
+        const toggle = document.getElementById('theme-toggle');
+        const icon = document.getElementById('theme-icon');
+        function updateIcon(){ icon.innerHTML = root.classList.contains('dark') ? '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>' : '<path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/>'; }
+        if(toggle){ toggle.addEventListener('click', ()=>{ const dark = root.classList.toggle('dark'); localStorage.setItem('risko:theme', dark ? 'dark' : 'light'); updateIcon(); }); updateIcon(); }
+      })();
+
+      // Simple fade-in on scroll for elements with data-animate
+      (function(){
+        const io = new IntersectionObserver((entries)=>{ entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('fade-in-visible'); }); }, {threshold:0.15});
+        document.querySelectorAll('[data-animate]').forEach(el=>{ el.classList.add('fade-in'); io.observe(el); });
+      })();
+
+      // Mock result generator (deterministic-ish)
+      function hashStr(s){ let h=0; for(let i=0;i<s.length;i++){ h = (h<<5)-h + s.charCodeAt(i); h |= 0; } return Math.abs(h); }
+      function mockResult(address){ const h = hashStr(address||'istanbul'); const earthquake = Math.min(95, 20 + (h % 60)); const flood = Math.min(95, 10 + ((h>>3) % 70)); const fire = Math.min(95, 5 + ((h>>5) % 80)); const landslide = Math.min(95, 0 + ((h>>7) % 70)); const overall = Math.round((earthquake*0.5 + flood*0.2 + fire*0.15 + landslide*0.15)); return {
+        overall_risk_score: overall,
+        risk_level: overall>=75 ? 'HIGH' : overall>=50 ? 'MEDIUM' : overall>=25 ? 'LOW' : 'VERY_LOW',
+        earthquake_risk: earthquake,
+        flood_risk: flood,
+        fire_risk: fire,
+        landslide_risk: landslide,
+        notes: 'Bu gösterim test verisidir. Gerçek API entegrasyonu farklı sonuç verebilir.'
+      }; }
+
+      // PDF and CSV export helpers
+      async function downloadPDF(data){ try{ const { jsPDF } = window.jspdf; const doc = new jsPDF(); doc.setFontSize(14); doc.text('Risko — Test Risk Raporu', 14, 20); doc.setFontSize(11); doc.text('Adres: ' + (data.address||''), 14, 32); doc.text('Genel Puan: ' + (Math.round(data.overall_risk_score||0)) + '%', 14, 40); doc.text('Not: Test verisidir.', 14, 250); doc.save('risko_test_report.pdf'); }catch(e){ alert('PDF oluşturulamadı: ' + e.message); } }
+      function downloadCSV(data){ const rows = [['label','value'], ['overall', data.overall_risk_score], ['earthquake', data.earthquake_risk], ['flood', data.flood_risk], ['fire', data.fire_risk], ['landslide', data.landslide_risk]]; const csv = rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'); const blob = new Blob([csv], {type:'text/csv'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'risko_test_report.csv'; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 500);
+      }
+
+      // Try to call backend; if not available show mock but label it as TEST
+      async function callAnalyzeSafe(body){ try{ const res = await fetch(API_BASE + ANALYZE_PATH, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)}); if(res.ok){ const j = await res.json(); j._from = 'api'; return j; } }catch(e){ /* ignore */ } const m = mockResult(body.address); m._from = 'mock'; m.address = body.address; return m; }
+
+      // Config: endpoint path used by backend FastAPI (mounted under /api/v1/risk)
+      const API_BASE = '';
+      const ANALYZE_PATH = '/api/v1/risk/analyze';
+
+      function setGauge(percent){
+        const arc = document.getElementById('gauge-arc');
+        const dash = Math.max(0, Math.min(100, percent));
+        // stroke-dasharray expects "used remaining"; map percent to arc length
+        arc.setAttribute('stroke-dasharray', `${dash} ${100-dash}`);
+      }
+
+      function riskLevelText(score){
+        if(score >= 75) return 'Yüksek Risk';
+        if(score >= 50) return 'Orta Risk';
+        if(score >= 25) return 'Düşük Risk';
+        return 'Çok Düşük Risk';
+      }
+
+      async function callAnalyze(body){
+        const res = await fetch(API_BASE + ANALYZE_PATH, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+        if(!res.ok){ const txt = await res.text(); throw new Error(txt || 'Sunucu hatası'); }
+        return await res.json();
+      }
+
+      const analyzeBtn = document.getElementById('analyze-btn');
+      // Add export buttons
+      const exportWrap = document.createElement('div'); exportWrap.className = 'mt-3 flex gap-2 items-center';
+      const pdfBtn = document.createElement('button'); pdfBtn.className = 'px-3 py-2 bg-slate-100 rounded text-sm'; pdfBtn.innerText = 'PDF indir';
+      const csvBtn = document.createElement('button'); csvBtn.className = 'px-3 py-2 bg-slate-100 rounded text-sm'; csvBtn.innerText = 'CSV indir';
+      const sourceBadge = document.createElement('span'); sourceBadge.className = 'text-xs text-slate-500 ml-2'; sourceBadge.innerText = '';
+      exportWrap.appendChild(pdfBtn); exportWrap.appendChild(csvBtn); exportWrap.appendChild(sourceBadge);
+      document.getElementById('result-card').appendChild(exportWrap);
+
+      analyzeBtn.addEventListener('click', async ()=>{
+        const addr = document.getElementById('address-input').value || 'İstanbul';
+        document.getElementById('loading').classList.remove('hidden');
+        document.getElementById('result-card').classList.add('hidden');
+        try{
+          const data = await callAnalyzeSafe({address: addr});
+          document.getElementById('loading').classList.add('hidden');
+          document.getElementById('result-card').classList.remove('hidden');
+          const overall = Math.round(data.overall_risk_score || 0);
+          document.getElementById('overall-score').innerText = overall + '%';
+          document.getElementById('risk-summary').innerText = (data.risk_level || '').replace('_',' ');
+          setGauge(overall);
+
+          const setBar = (id, val)=>{ document.getElementById(id).style.width = val + '%'; };
+          const colorClass = (val)=> val<40 ? 'bg-green-500' : val<70 ? 'bg-yellow-400' : 'bg-red-500';
+          const e = Math.round((data.earthquake_risk||0));
+          document.getElementById('earthquake-val').innerText = e + '%'; setBar('bar-earthquake', e); document.getElementById('bar-earthquake').className = 'h-3 rounded ' + colorClass(e);
+          const f = Math.round((data.flood_risk||0)); document.getElementById('flood-val').innerText = f + '%'; setBar('bar-flood', f); document.getElementById('bar-flood').className = 'h-3 rounded ' + colorClass(f);
+          const fi = Math.round((data.fire_risk||0)); document.getElementById('fire-val').innerText = fi + '%'; setBar('bar-fire', fi); document.getElementById('bar-fire').className = 'h-3 rounded ' + colorClass(fi);
+          const l = Math.round((data.landslide_risk||0)); document.getElementById('landslide-val').innerText = l + '%'; setBar('bar-landslide', l); document.getElementById('bar-landslide').className = 'h-3 rounded ' + colorClass(l);
+
+          document.getElementById('level-text').innerText = riskLevelText(overall);
+          sourceBadge.innerText = data._from === 'mock' ? 'Test verisi (simülasyon)' : 'Gerçek API verisi';
+
+          pdfBtn.onclick = ()=> downloadPDF(Object.assign({address:addr},data));
+          csvBtn.onclick = ()=> downloadCSV(Object.assign({address:addr},data));
+
+        }catch(err){
+          document.getElementById('loading').classList.add('hidden');
+          alert('Analiz başarısız: ' + (err.message||err));
+        }
+      });
+    </script>
+  </body>
+</html>
