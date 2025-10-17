@@ -59,6 +59,17 @@
   /* Card base for consistent container look */
   .card{background:white;border-radius:12px;padding:0;box-shadow:0 8px 18px rgba(15,23,42,0.06)}
   .card > .card-body{padding:24px}
+  /* Compact variant for smaller cards (reduces vertical whitespace) */
+  .card--compact > .card-body{padding:16px 24px}
+  /* Nav button styles for clearer Giriş / Kayıt distinction */
+  .nav-btn{padding:8px 12px;border-radius:10px;font-weight:600;transition:transform .12s, box-shadow .12s}
+  .nav-btn.ghost{background:transparent;border:1px solid rgba(15,23,42,0.06);color:inherit}
+  .nav-btn.primary{background:linear-gradient(90deg,#4f46e5,#06b6d4);color:white;box-shadow:0 8px 24px rgba(79,70,229,0.12)}
+  .dark .nav-btn.ghost{border-color:rgba(255,255,255,0.06)}
+  .dark .nav-btn.primary{box-shadow:0 8px 24px rgba(2,6,23,0.5)}
+  /* Gauge background path color for dark mode */
+  .gauge-bg{stroke:#e6e6e6}
+  .dark .gauge-bg{stroke:rgba(255,255,255,0.06) !important}
   .dark .card{background:#071127;border:1px solid rgba(255,255,255,0.04);box-shadow:0 10px 30px rgba(2,6,23,0.55)}
   .dark .glass{background-color: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.03)}
   /* Slightly warmer dark-card background and softer shadows for readability */
@@ -82,9 +93,9 @@
           </div>
         </div>
         <nav class="hidden sm:flex gap-4 text-sm text-slate-600 items-center">
-          <button id="btn-login" class="ml-4 px-4 py-2 border rounded text-sm font-medium hover:bg-slate-100">Giriş</button>
+          <button id="btn-login" class="nav-btn ghost ml-4">Giriş</button>
           <a href="/login.html" class="ml-2 px-3 py-1 text-sm hidden">login</a>
-          <button id="btn-register" class="ml-2 px-4 py-2 bg-brand text-white rounded text-sm font-medium shadow-sm hover:opacity-95">Kayıt</button>
+          <button id="btn-register" class="nav-btn primary ml-2">Kayıt</button>
           <button id="theme-toggle" aria-label="Toggle theme" class="ml-4 p-2 rounded border"><svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path></svg></button>
         </nav>
       </div>
@@ -118,7 +129,7 @@
                   <div id="risk-summary" class="mt-2 text-sm text-slate-600"></div>
                 </div>
                 <div class="w-36 h-36 flex items-center justify-center">
-                  <svg id="gauge" viewBox="0 0 36 36" class="w-28 h-28"><path d="M2 18a16 16 0 1 1 32 0" fill="none" stroke="#e6e6e6" stroke-width="3" stroke-linecap="round"/><path id="gauge-arc" d="M2 18a16 16 0 1 1 32 0" fill="none" stroke="#4f46e5" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 100"/></svg>
+                  <svg id="gauge" viewBox="0 0 36 36" class="w-28 h-28"><path class="gauge-bg" d="M2 18a16 16 0 1 1 32 0" fill="none" stroke="#e6e6e6" stroke-width="3" stroke-linecap="round"/><path id="gauge-arc" d="M2 18a16 16 0 1 1 32 0" fill="none" stroke="#4f46e5" stroke-width="3" stroke-linecap="round" stroke-dasharray="0 100"/></svg>
                 </div>
               </div>
 
@@ -169,21 +180,21 @@
 
       <!-- Pricing & B2B -->
       <section class="grid md:grid-cols-2 gap-6 mb-12">
-  <div class="card overflow-hidden">
+  <div class="card card--compact overflow-hidden">
             <div class="card-body">
           <h3 class="text-lg font-semibold">Bireysel Kullanıcılar (Freemium)</h3>
           <p class="mt-2 text-sm text-slate-600">Ücretsiz temel analiz: özet risk puanı ve kısa öneriler. Premium ile geçmiş analizlere ve detaylı raporlara erişim.</p>
           <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div class="p-3 border rounded flex flex-col justify-between">
+            <div class="p-2 border rounded">
               <div>
                 <div class="text-sm font-medium">Temel Analiz</div>
-                <div class="text-xs text-slate-500 mt-2">Hızlı özet, 5 analiz/ay</div>
+                <div class="text-xs text-slate-500 mt-1">Hızlı özet, 5 analiz/ay</div>
               </div>
             </div>
-            <div class="p-3 border rounded flex flex-col justify-between">
+            <div class="p-2 border rounded">
               <div>
                 <div class="text-sm font-medium">Detaylı Rapor (Premium)</div>
-                <div class="text-xs text-slate-500 mt-2">Öneriler, uzun dönem tahminler.</div>
+                <div class="text-xs text-slate-500 mt-1">Öneriler, uzun dönem tahminler.</div>
               </div>
             </div>
           </div>
