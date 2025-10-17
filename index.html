@@ -49,9 +49,6 @@
           </div>
         </div>
         <nav class="hidden sm:flex gap-4 text-sm text-slate-600 items-center">
-          <a href="#" class="hover:text-slate-900">Ana Sayfa</a>
-          <a href="#" class="hover:text-slate-900">Kurumsal</a>
-          <a href="#" class="hover:text-slate-900">İletişim</a>
           <button id="btn-login" class="ml-4 px-3 py-1 border rounded text-sm">Giriş</button>
           <button id="btn-register" class="ml-2 px-3 py-1 bg-brand text-white rounded text-sm">Kayıt</button>
           <button id="theme-toggle" aria-label="Toggle theme" class="ml-4 p-2 rounded border"><svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path></svg></button>
@@ -72,7 +69,7 @@
               <input id="address-input" class="w-full px-4 py-3 rounded-lg border border-slate-200 shadow-sm" placeholder="Örn: İstanbul, Beyoğlu, Galata" />
               <button id="analyze-btn" class="px-5 py-3 rounded-lg bg-brand text-white font-medium shadow">Riski Sorgula</button>
             </div>
-            <p class="mt-2 text-sm text-slate-500">Ücretsiz temel analiz: hızlı özet. Detaylı raporlar yakında.</p>
+            <p class="mt-2 text-sm text-slate-500">Ücretsiz temel analiz: hızlı özet.</p>
           </div>
         <section id="anasayfa" class="grid md:grid-cols-2 gap-8 items-center">
           <div>
@@ -273,7 +270,7 @@
         // Initial route
         (function(){ const initial = window.location.hash ? window.location.hash.replace('#','') : 'anasayfa'; show(initial); })();
 
-        document.getElementById('nav-login').addEventListener('click', e=>{ e.preventDefault(); show('login'); window.location.hash='login'; });
+  const navLoginBtn = document.getElementById('nav-login'); if(navLoginBtn) navLoginBtn.addEventListener('click', e=>{ e.preventDefault(); window.location.href = '/login.html'; });
         document.getElementById('nav-panel').addEventListener('click', e=>{ e.preventDefault(); show('panel'); window.location.hash='panel'; });
       </script>
     </body>
@@ -374,7 +371,7 @@
       document.getElementById('reg-email').value = '';
       document.getElementById('reg-password').value = '';
       // switch to login view after short delay
-      setTimeout(()=>{ show('login'); window.location.hash='login'; }, 1400);
+  setTimeout(()=>{ window.location.href = '/login.html'; }, 1400);
     }catch(err){
       const msg = err?.message || (err?.error && err.error.message) || JSON.stringify(err);
       msgEl.className = 'mt-2 text-sm text-red-600';
