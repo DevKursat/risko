@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>Risko — Adresinizin Risk Puanını Saniyeler İçinde Öğrenin</title>
     <meta name="description" content="Risko ile deprem, sel, yangın ve heyelan risklerini tek bir yerden analiz edin." />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config = {theme: {extend: {colors: {brand:'#4f46e5'}}}};</script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = {theme: {extend: {colors: {brand:'#4f46e5', accent:'#06b6d4'}}}, darkMode: 'class'};</script>
+  <!-- jsPDF for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <link rel="icon" href="/favicon.svg">
     <style>
       /* Minimal additional styles for better visuals */
@@ -14,7 +16,7 @@
       .glass{backdrop-filter: blur(6px); background-color: rgba(255,255,255,0.6);}
     </style>
   </head>
-  <body class="antialiased bg-slate-50 text-slate-900">
+    <body class="antialiased bg-slate-50 text-slate-900" data-theme="light">
     <header class="py-6">
       <div class="max-w-5xl mx-auto px-4 flex items-center justify-between">
         <div class="flex items-center gap-3">
@@ -24,10 +26,13 @@
             <div class="text-sm text-slate-500">Türkiye Afet Risk Analiz Platformu (MVP)</div>
           </div>
         </div>
-        <nav class="hidden sm:flex gap-4 text-sm text-slate-600">
+        <nav class="hidden sm:flex gap-4 text-sm text-slate-600 items-center">
           <a href="#" class="hover:text-slate-900">Ana Sayfa</a>
           <a href="#" class="hover:text-slate-900">Kurumsal</a>
           <a href="#" class="hover:text-slate-900">İletişim</a>
+          <button id="btn-login" class="ml-4 px-3 py-1 border rounded text-sm">Giriş</button>
+          <button id="btn-register" class="ml-2 px-3 py-1 bg-brand text-white rounded text-sm">Kayıt</button>
+          <button id="theme-toggle" aria-label="Toggle theme" class="ml-4 p-2 rounded border"><svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path></svg></button>
         </nav>
       </div>
     </header>
@@ -86,14 +91,14 @@
         </div>
 
         <div class="hidden md:block">
-          <div class="rounded-xl overflow-hidden shadow-lg">
+          <div class="rounded-xl overflow-hidden shadow-lg transform transition-all duration-700 hover:scale-[1.01]">
             <div class="p-6 bg-gradient-to-br from-slate-800 to-brand text-white">
               <h3 class="text-xl font-semibold">Risko Nedir?</h3>
               <p class="mt-3 text-sm">Güncel ve güvenilir risk verisi eksikliği büyük bir sorun. Risko, AFAD, Kandilli gibi kaynaklarla entegrasyon hedefiyle, adres bazlı çoklu risk profilini tek bir raporda sunar.</p>
             </div>
-            <div class="p-6 bg-white">
+            <div class="p-6 bg-white dark:bg-slate-800">
               <h4 class="font-semibold">Hangi riskleri ölçeriz?</h4>
-              <ul class="mt-3 text-sm text-slate-600 space-y-2">
+              <ul class="mt-3 text-sm text-slate-600 dark:text-slate-300 space-y-2">
                 <li>• Deprem</li>
                 <li>• Sel</li>
                 <li>• Yangın</li>
@@ -121,11 +126,18 @@
           </div>
         </div>
 
-        <div class="bg-white p-6 rounded-lg shadow">
-          <h3 class="text-lg font-semibold">Kurumsal Müşteriler (B2B)</h3>
-          <p class="mt-2 text-sm text-slate-600">Sigorta şirketleri ve bankalar için toplu analiz API'si ve SLA destekli hizmetler.</p>
-          <div class="mt-4">
-            <button class="px-4 py-2 bg-brand text-white rounded" id="contact-sales">Satış Ekibiyle İletişime Geç</button>
+        <div class="bg-gradient-to-br from-white to-slate-50 p-6 rounded-lg shadow-lg border dark:bg-gradient-to-br dark:from-slate-800 dark:to-slate-900">
+          <div class="flex items-start gap-4">
+            <div class="w-14 h-14 rounded-lg bg-gradient-to-br from-brand to-accent text-white flex items-center justify-center shadow-lg transform -translate-y-2">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="opacity-90"><path d="M3 7h18M3 12h18M3 17h18"/></svg>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold">Kurumsal Müşteriler (B2B)</h3>
+              <p class="mt-2 text-sm text-slate-600 dark:text-slate-300">Sigorta şirketleri ve bankalar için toplu analiz API'si, SLA ve kurumsal destek. Deneme sürecinde tam özelliklerle gösterilmektedir.</p>
+              <div class="mt-4">
+                <button class="px-4 py-2 bg-brand text-white rounded shadow" id="contact-sales">Satış Ekibiyle İletişime Geç</button>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -142,6 +154,43 @@
     </main>
 
     <script>
+      // Theme handling: persist in localStorage
+      (function(){
+        const root = document.documentElement;
+        const stored = localStorage.getItem('risko:theme');
+        if(stored === 'dark') root.classList.add('dark');
+        const toggle = document.getElementById('theme-toggle');
+        const icon = document.getElementById('theme-icon');
+        function updateIcon(){ icon.innerHTML = root.classList.contains('dark') ? '<path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path>' : '<path d="M12 3v2M12 19v2M4.2 4.2l1.4 1.4M18.4 18.4l1.4 1.4M1 12h2M21 12h2M4.2 19.8l1.4-1.4M18.4 5.6l1.4-1.4"/>'; }
+        if(toggle){ toggle.addEventListener('click', ()=>{ const dark = root.classList.toggle('dark'); localStorage.setItem('risko:theme', dark ? 'dark' : 'light'); updateIcon(); }); updateIcon(); }
+      })();
+
+      // Simple fade-in on scroll for elements with data-animate
+      (function(){
+        const io = new IntersectionObserver((entries)=>{ entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('fade-in-visible'); }); }, {threshold:0.15});
+        document.querySelectorAll('[data-animate]').forEach(el=>{ el.classList.add('fade-in'); io.observe(el); });
+      })();
+
+      // Mock result generator (deterministic-ish)
+      function hashStr(s){ let h=0; for(let i=0;i<s.length;i++){ h = (h<<5)-h + s.charCodeAt(i); h |= 0; } return Math.abs(h); }
+      function mockResult(address){ const h = hashStr(address||'istanbul'); const earthquake = Math.min(95, 20 + (h % 60)); const flood = Math.min(95, 10 + ((h>>3) % 70)); const fire = Math.min(95, 5 + ((h>>5) % 80)); const landslide = Math.min(95, 0 + ((h>>7) % 70)); const overall = Math.round((earthquake*0.5 + flood*0.2 + fire*0.15 + landslide*0.15)); return {
+        overall_risk_score: overall,
+        risk_level: overall>=75 ? 'HIGH' : overall>=50 ? 'MEDIUM' : overall>=25 ? 'LOW' : 'VERY_LOW',
+        earthquake_risk: earthquake,
+        flood_risk: flood,
+        fire_risk: fire,
+        landslide_risk: landslide,
+        notes: 'Bu gösterim test verisidir. Gerçek API entegrasyonu farklı sonuç verebilir.'
+      }; }
+
+      // PDF and CSV export helpers
+      async function downloadPDF(data){ try{ const { jsPDF } = window.jspdf; const doc = new jsPDF(); doc.setFontSize(14); doc.text('Risko — Test Risk Raporu', 14, 20); doc.setFontSize(11); doc.text('Adres: ' + (data.address||''), 14, 32); doc.text('Genel Puan: ' + (Math.round(data.overall_risk_score||0)) + '%', 14, 40); doc.text('Not: Test verisidir.', 14, 250); doc.save('risko_test_report.pdf'); }catch(e){ alert('PDF oluşturulamadı: ' + e.message); } }
+      function downloadCSV(data){ const rows = [['label','value'], ['overall', data.overall_risk_score], ['earthquake', data.earthquake_risk], ['flood', data.flood_risk], ['fire', data.fire_risk], ['landslide', data.landslide_risk]]; const csv = rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'); const blob = new Blob([csv], {type:'text/csv'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'risko_test_report.csv'; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 500);
+      }
+
+      // Try to call backend; if not available show mock but label it as TEST
+      async function callAnalyzeSafe(body){ try{ const res = await fetch(API_BASE + ANALYZE_PATH, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)}); if(res.ok){ const j = await res.json(); j._from = 'api'; return j; } }catch(e){ /* ignore */ } const m = mockResult(body.address); m._from = 'mock'; m.address = body.address; return m; }
+
       // Config: endpoint path used by backend FastAPI (mounted under /api/v1/risk)
       const API_BASE = '';
       const ANALYZE_PATH = '/api/v1/risk/analyze';
@@ -167,12 +216,20 @@
       }
 
       const analyzeBtn = document.getElementById('analyze-btn');
+      // Add export buttons
+      const exportWrap = document.createElement('div'); exportWrap.className = 'mt-3 flex gap-2 items-center';
+      const pdfBtn = document.createElement('button'); pdfBtn.className = 'px-3 py-2 bg-slate-100 rounded text-sm'; pdfBtn.innerText = 'PDF indir';
+      const csvBtn = document.createElement('button'); csvBtn.className = 'px-3 py-2 bg-slate-100 rounded text-sm'; csvBtn.innerText = 'CSV indir';
+      const sourceBadge = document.createElement('span'); sourceBadge.className = 'text-xs text-slate-500 ml-2'; sourceBadge.innerText = '';
+      exportWrap.appendChild(pdfBtn); exportWrap.appendChild(csvBtn); exportWrap.appendChild(sourceBadge);
+      document.getElementById('result-card').appendChild(exportWrap);
+
       analyzeBtn.addEventListener('click', async ()=>{
         const addr = document.getElementById('address-input').value || 'İstanbul';
         document.getElementById('loading').classList.remove('hidden');
         document.getElementById('result-card').classList.add('hidden');
         try{
-          const data = await callAnalyze({address: addr});
+          const data = await callAnalyzeSafe({address: addr});
           document.getElementById('loading').classList.add('hidden');
           document.getElementById('result-card').classList.remove('hidden');
           const overall = Math.round(data.overall_risk_score || 0);
@@ -189,6 +246,11 @@
           const l = Math.round((data.landslide_risk||0)); document.getElementById('landslide-val').innerText = l + '%'; setBar('bar-landslide', l); document.getElementById('bar-landslide').className = 'h-3 rounded ' + colorClass(l);
 
           document.getElementById('level-text').innerText = riskLevelText(overall);
+          sourceBadge.innerText = data._from === 'mock' ? 'Test verisi (simülasyon)' : 'Gerçek API verisi';
+
+          pdfBtn.onclick = ()=> downloadPDF(Object.assign({address:addr},data));
+          csvBtn.onclick = ()=> downloadCSV(Object.assign({address:addr},data));
+
         }catch(err){
           document.getElementById('loading').classList.add('hidden');
           alert('Analiz başarısız: ' + (err.message||err));
