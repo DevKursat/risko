@@ -43,30 +43,28 @@
       /* Polished PDF table style in print preview (if shown) */
       .report-table td, .report-table th{padding:6px 8px;border-bottom:1px solid rgba(0,0,0,0.06)}
 
+      /* Inputs and export buttons in dark mode */
+      .export-btn{background:#f1f5f9;color:#081029;border:1px solid rgba(15,23,42,0.06);padding:6px 10px;border-radius:8px;box-shadow:0 6px 14px rgba(15,23,42,0.04)}
+      .export-btn:hover{opacity:.96}
+      .export-btn:focus{outline:3px solid rgba(79,70,229,0.14);outline-offset:2px}
+      .dark .export-btn{background:linear-gradient(180deg,#071127,#07122a);color:#dbe9ff;border:1px solid rgba(255,255,255,0.06);box-shadow:0 6px 18px rgba(2,6,23,0.55)}
+      .dark input, .dark textarea, .dark select { background:#071127; color:#dbe9ff; border-color: rgba(255,255,255,0.06); }
+      .dark input::placeholder { color: #94a3b8; }
+
+      /* Gauge arc animation */
+      #gauge-arc { transition: stroke-dashoffset .9s cubic-bezier(.2,.9,.2,1), stroke .35s ease; transform-origin: 50% 50%; }
+      /* Progress bar transitions */
+      [id^="bar-"]{transition:width .9s cubic-bezier(.2,.9,.2,1)}
+
   /* Card base for consistent container look */
   .card{background:white;border-radius:12px;padding:0;box-shadow:0 8px 18px rgba(15,23,42,0.06)}
   .card > .card-body{padding:24px}
-  /* compact card body for denser content */
-  .card .card-body.compact{padding:12px 16px}
   .dark .card{background:#071127;border:1px solid rgba(255,255,255,0.04);box-shadow:0 10px 30px rgba(2,6,23,0.55)}
   .dark .glass{background-color: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.03)}
   /* Slightly warmer dark-card background and softer shadows for readability */
   .dark body { background: #071025; }
   .dark .card { background: linear-gradient(180deg,#07122a,#071127); border:1px solid rgba(255,255,255,0.04); box-shadow:0 8px 22px rgba(0,0,0,0.6); }
   .dark .card .card-body { color: #dbe9ff; }
-  /* Inputs and small panels in dark mode */
-  input, textarea, select { transition: background .2s, color .2s, border-color .2s }
-  .dark input, .dark textarea, .dark select, .dark .bg-slate-50 { background: #071127 !important; color: #dbe9ff !important; border-color: rgba(255,255,255,0.06) !important; }
-  .dark input::placeholder, .dark textarea::placeholder { color: #94a3b8 !important; }
-  /* Export button styles */
-  .btn-export{background:#f1f5f9;color:#071022;border-radius:8px;padding:6px 10px;border:1px solid rgba(15,23,42,0.04)}
-  .dark .btn-export{background:#071127;color:#dbe9ff;border:1px solid rgba(255,255,255,0.04)}
-  /* Gauge arc animation */
-  #gauge-arc{transition:stroke-dasharray .9s cubic-bezier(.2,.9,.2,1), stroke .3s}
-  /* Improved nav button styles */
-  .nav-btn{padding:6px 10px;border-radius:8px;font-weight:600}
-  .nav-btn.primary{background:linear-gradient(90deg,#4f46e5,#06b6d4);color:white;box-shadow:0 6px 18px rgba(79,70,229,0.12)}
-  .nav-btn.ghost{background:transparent;border:1px solid rgba(15,23,42,0.06);color:inherit}
   /* Pulse colors default states */
   #score-pulse.bg-red-500{background-color:#ef4444}
   #score-pulse.bg-yellow-400{background-color:#f59e0b}
@@ -84,8 +82,9 @@
           </div>
         </div>
         <nav class="hidden sm:flex gap-4 text-sm text-slate-600 items-center">
-          <button id="btn-login" class="nav-btn ghost ml-4">Giriş</button>
-          <button id="btn-register" class="nav-btn primary ml-2">Kayıt</button>
+          <button id="btn-login" class="ml-4 px-4 py-2 border rounded text-sm font-medium hover:bg-slate-100">Giriş</button>
+          <a href="/login.html" class="ml-2 px-3 py-1 text-sm hidden">login</a>
+          <button id="btn-register" class="ml-2 px-4 py-2 bg-brand text-white rounded text-sm font-medium shadow-sm hover:opacity-95">Kayıt</button>
           <button id="theme-toggle" aria-label="Toggle theme" class="ml-4 p-2 rounded border"><svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path></svg></button>
         </nav>
       </div>
@@ -170,13 +169,11 @@
 
       <!-- Pricing & B2B -->
       <section class="grid md:grid-cols-2 gap-6 mb-12">
-        <div class="card h-full">
-          <div class="p-6 bg-gradient-to-br from-slate-800 to-brand text-white rounded-t-lg">
-            <h3 class="text-lg font-semibold">Bireysel Kullanıcılar (Freemium)</h3>
-            <p class="mt-2 text-sm">Ücretsiz temel analiz: özet risk puanı ve kısa öneriler.</p>
-          </div>
-          <div class="card-body mt-auto compact">
-          <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3 mt-auto">
+  <div class="card overflow-hidden">
+            <div class="card-body">
+          <h3 class="text-lg font-semibold">Bireysel Kullanıcılar (Freemium)</h3>
+          <p class="mt-2 text-sm text-slate-600">Ücretsiz temel analiz: özet risk puanı ve kısa öneriler. Premium ile geçmiş analizlere ve detaylı raporlara erişim.</p>
+          <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div class="p-3 border rounded flex flex-col justify-between">
               <div>
                 <div class="text-sm font-medium">Temel Analiz</div>
@@ -190,14 +187,14 @@
               </div>
             </div>
           </div>
-        </div>
-        <div class="card h-full">
-          <div class="card-body p-0 h-full flex flex-col">
-            <div class="p-4 bg-gradient-to-br from-slate-800 to-brand text-white rounded-t-lg">
-              <h3 class="text-xl font-semibold">Kurumsal Çözümler</h3>
-              <p class="mt-1 text-sm">Toplu analiz API'si, SLA, veri entegrasyonları ve kurumlara özel raporlar.</p>
             </div>
-            <div class="card-body mt-auto">
+        </div>
+        <div class="card h-full overflow-hidden">
+            <div class="p-6 bg-gradient-to-br from-slate-800 to-brand text-white">
+              <h3 class="text-xl font-semibold">Kurumsal Çözümler</h3>
+              <p class="mt-2 text-sm">Toplu analiz API'si, SLA, veri entegrasyonları ve kurumlara özel raporlar.</p>
+            </div>
+            <div class="card-body">
               <h4 class="font-semibold">Kurumsal Özellikler</h4>
               <ul class="mt-3 text-sm text-slate-600 dark:text-slate-300 space-y-2">
                 <li>• Toplu analiz (API)</li>
@@ -208,7 +205,6 @@
                 <button id="contact-sales" class="px-4 py-2 rounded cta-fancy">Satış Ekibiyle İletişime Geç</button>
               </div>
             </div>
-          </div>
         </div>
       </section>
 
@@ -283,21 +279,20 @@
 
       // PDF and CSV export helpers
     async function downloadPDF(data){ try{ const { jsPDF } = window.jspdf; const doc = new jsPDF({unit:'pt', format:'a4'});
-      doc.setFillColor(15,23,42); doc.rect(0,0,595,842,'F'); doc.setTextColor(255,255,255);
-          // draw a simple logo circle + R on the left
-          doc.setFillColor(79,70,229); doc.circle(40, 50, 18, 'F'); doc.setFontSize(14); doc.setTextColor(255,255,255); doc.text('R', 36, 56);
-          doc.setTextColor(255,255,255); doc.setFontSize(18); doc.text('Risko — Test Risk Raporu', 74, 56);
-          doc.setFontSize(11); doc.text('Adres: ' + (data.address||''), 40, 90);
-          doc.text('Genel Puan: ' + (Math.round(data.overall_risk_score||0)) + '%', 40, 108);
-      doc.setDrawColor(255,255,255); doc.setLineWidth(0.5); doc.line(40,120,555,120);
-      // small table
+      // light PDF with left logo and wrapped notes
+      doc.setFillColor(255,255,255); doc.rect(0,0,595,842,'F'); doc.setTextColor(32,37,51);
+      // logo circle
+      doc.setFillColor(79,70,229); doc.circle(40, 50, 20, 'F'); doc.setFontSize(16); doc.setTextColor(255,255,255); doc.text('R', 36, 56);
+      doc.setFontSize(18); doc.setTextColor(32,37,51); doc.text('Risko — Test Risk Raporu', 80, 56);
+      doc.setFontSize(11); doc.text('Adres: ' + (data.address||''), 40, 90);
+      doc.text('Genel Puan: ' + (Math.round(data.overall_risk_score||0)) + '%', 40, 108);
+      doc.setDrawColor(200,200,200); doc.setLineWidth(0.5); doc.line(40,120,555,120);
       const rows = [ ['Risk','Puan'], ['Deprem', data.earthquake_risk], ['Sel', data.flood_risk], ['Yangın', data.fire_risk], ['Heyelan', data.landslide_risk] ];
-      let y = 140; doc.setFillColor(255,255,255,0.03); doc.setFontSize(11);
+      let y = 140; doc.setFontSize(11);
       rows.forEach((r, idx)=>{ doc.text(String(r[0]), 60, y); doc.text(String(r[1]) + '%', 480, y); y += 18; });
-  doc.setFontSize(10); const note = 'Not: Bu rapor test verisini gösterir. Gerçek veriler API entegrasyonunda farklılık gösterebilir.';
-  // wrap note to fit page
-  const split = doc.splitTextToSize(note, 520);
-  doc.text(split, 40, y+20);
+      doc.setFontSize(10); const note = 'Not: Bu rapor test verisini gösterir. Gerçek veriler API entegrasyonunda farklılık gösterebilir.';
+      const split = doc.splitTextToSize(note, 520);
+      doc.setTextColor(100,100,110); doc.text(split, 40, y+20);
       doc.save('risko_test_report.pdf'); }catch(e){ alert('PDF oluşturulamadı: ' + e.message); } }
     function downloadCSV(data){ const rows = [['label','value'], ['overall', data.overall_risk_score], ['earthquake', data.earthquake_risk], ['flood', data.flood_risk], ['fire', data.fire_risk], ['landslide', data.landslide_risk]]; const csv = rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n'); const blob = new Blob([csv], {type:'text/csv'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'risko_test_report.csv'; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 500); }
 
@@ -308,15 +303,32 @@
       const API_BASE = '';
       const ANALYZE_PATH = '/api/v1/risk/analyze';
 
-      function setGauge(percent){
+      // robust gauge using path length
+      (function initGauge(){
         const arc = document.getElementById('gauge-arc');
-        const dash = Math.max(0, Math.min(100, percent));
-        arc.setAttribute('stroke-dasharray', `${dash} ${100-dash}`);
+        if(!arc) return;
+        const len = arc.getTotalLength ? arc.getTotalLength() : 100;
+        arc.style.strokeDasharray = len + ' ' + len;
+        arc.style.strokeDashoffset = len;
+        // expose length for later
+        arc.dataset.len = len;
+      })();
+
+      function setGauge(percent){
+        const arc = document.getElementById('gauge-arc'); if(!arc) return;
+        const len = parseFloat(arc.dataset.len || arc.getTotalLength());
+        const p = Math.max(0, Math.min(100, percent))/100;
+        const offset = Math.round(len * (1 - p));
+        arc.style.strokeDashoffset = offset;
         // color by severity
         if(percent >= 75) arc.setAttribute('stroke', '#ef4444');
         else if(percent >= 50) arc.setAttribute('stroke', '#f59e0b');
         else arc.setAttribute('stroke', '#10b981');
       }
+
+      // helper to animate width of a bar element
+      function animateBar(id, val){ const el = document.getElementById(id); if(!el) return; el.style.width = '0%'; // start from 0 for visible animation
+        requestAnimationFrame(()=>{ el.style.width = Math.max(0,Math.min(100,val)) + '%'; }); }
 
       function riskLevelText(score){
         if(score >= 75) return 'Yüksek Risk';
@@ -333,9 +345,9 @@
 
       const analyzeBtn = document.getElementById('analyze-btn');
       // Add export buttons
-      const exportWrap = document.createElement('div'); exportWrap.className = 'mt-3 flex gap-2 items-center'; exportWrap.style.marginTop = '8px';
-  const pdfBtn = document.createElement('button'); pdfBtn.className = 'btn-export'; pdfBtn.innerText = 'PDF indir';
-  const csvBtn = document.createElement('button'); csvBtn.className = 'btn-export'; csvBtn.innerText = 'CSV indir';
+      const exportWrap = document.createElement('div'); exportWrap.className = 'mt-3 flex gap-2 items-center';
+  const pdfBtn = document.createElement('button'); pdfBtn.className = 'export-btn px-3 py-2 rounded text-sm'; pdfBtn.innerText = 'PDF indir';
+  const csvBtn = document.createElement('button'); csvBtn.className = 'export-btn px-3 py-2 rounded text-sm'; csvBtn.innerText = 'CSV indir';
       const sourceBadge = document.createElement('span'); sourceBadge.className = 'text-xs text-slate-500 ml-2'; sourceBadge.innerText = '';
       exportWrap.appendChild(pdfBtn); exportWrap.appendChild(csvBtn); exportWrap.appendChild(sourceBadge);
   const resultCard = document.getElementById('result-card');
@@ -361,7 +373,7 @@
           document.getElementById('risk-summary').innerText = (data.risk_level || '').replace('_',' ');
           setGauge(overall);
 
-          const setBar = (id, val)=>{ document.getElementById(id).style.width = val + '%'; };
+          const setBar = (id, val)=>{ animateBar(id, val); };
           const colorClass = (val)=> val<40 ? 'bg-green-500' : val<70 ? 'bg-yellow-400' : 'bg-red-500';
           const e = Math.round((data.earthquake_risk||0));
           document.getElementById('earthquake-val').innerText = e + '%'; setBar('bar-earthquake', e); document.getElementById('bar-earthquake').className = 'h-3 rounded ' + colorClass(e);
