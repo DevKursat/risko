@@ -3,25 +3,77 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>Risko — Demo</title>
-    <meta http-equiv="refresh" content="0; url=/frontend/index.html" />
-    <script>
-      // Fallback JS redirect for clients that don't honor meta refresh immediately
-      window.location.replace('/frontend/index.html');
-    </script>
+    <title>Risko — Adresinizin Risk Puanını Saniyeler İçinde Öğrenin</title>
+    <meta name="description" content="Risko ile deprem, sel, yangın ve heyelan risklerini tek bir yerden analiz edin." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = {theme: {extend: {colors: {brand:'#4f46e5', accent:'#06b6d4'}}}, darkMode: 'class'};</script>
+  <!-- jsPDF for PDF export -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="icon" href="/favicon.svg">
     <style>
-      body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; display:flex; align-items:center; justify-content:center; height:100vh; margin:0; background:#f8fafc; color:#0f172a }
-      .box{max-width:640px;padding:24px;background:white;border-radius:12px;box-shadow:0 6px 18px rgba(15,23,42,0.06);text-align:center}
-      a{color:#4f46e5;text-decoration:none;font-weight:600}
+      /* Minimal additional styles for better visuals */
+      .gradient-hero{background:linear-gradient(135deg,#0f172a 0%, #4f46e5 100%);} 
+      .glass{backdrop-filter: blur(6px); background-color: rgba(255,255,255,0.6);} 
+      .fade-in{opacity:0; transform:translateY(8px); transition:opacity .6s ease, transform .6s ease}
+      .fade-in-visible{opacity:1; transform:none}
+      
+      /* Simple dark-mode overrides for common Tailwind utilities used in the page.
+        This keeps dark styling consistent without editing every class. */
+      .dark body, .dark main { background: #0b1220 !important; color: #e6eef8 !important; }
+      .dark .bg-white { background-color: #0b1220 !important; }
+      .dark .text-slate-900 { color: #e6eef8 !important; }
+      .dark .text-slate-600 { color: #94a3b8 !important; }
+      .dark .text-slate-500 { color: #94a3b8 !important; }
+      .dark .bg-slate-50 { background-color: #071023 !important; }
+      .dark .bg-slate-200 { background-color: #132034 !important; }
+      .dark .border-slate-200 { border-color: rgba(255,255,255,0.06) !important; }
+      .dark .shadow-lg { box-shadow: 0 10px 30px rgba(2,6,23,0.6) !important; }
+
+      /* Mouse follower */
+      #cursor-follower{position:fixed;left:0;top:0;pointer-events:none;width:120px;height:120px;border-radius:50%;mix-blend-mode:screen;transform:translate(-50%,-50%) scale(.15);transition:transform .15s ease, opacity .2s;opacity:.9;z-index:9999;background:radial-gradient(circle at 30% 30%, rgba(79,70,229,0.35), rgba(6,182,212,0.15) 40%, transparent 60%);} 
+      .cta-fancy{background:linear-gradient(90deg,#4f46e5,#06b6d4);box-shadow:0 8px 24px rgba(79,70,229,0.14);color:white}
+      .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.06)}
+
+      /* Polished PDF table style in print preview (if shown) */
+      .report-table td, .report-table th{padding:6px 8px;border-bottom:1px solid rgba(0,0,0,0.06)}
     </style>
   </head>
-  <body>
-    <div class="box">
-      <h1>Risko — Demo sayfasına yönlendiriliyorsunuz</h1>
-      <p style="margin-top:12px;color:#475569">Eğer otomatik olarak yönlendirilmezseniz, <a href="/frontend/index.html">buraya tıklayın</a>.</p>
-    </div>
-  </body>
-</html>
+    <body class="antialiased bg-slate-50 text-slate-900" data-theme="light">
+    <header class="py-6">
+      <div class="max-w-5xl mx-auto px-4 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow"><svg width="20" height="20" viewBox="0 0 24 24" fill="#4f46e5" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7v6c0 5 5 9 10 9s10-4 10-9V7l-10-5z"/></svg></div>
+          <div>
+            <div class="text-lg font-semibold">Risko</div>
+            <div class="text-sm text-slate-500">Türkiye Afet Risk Analiz Platformu (MVP)</div>
+          </div>
+        </div>
+        <nav class="hidden sm:flex gap-4 text-sm text-slate-600 items-center">
+          <a href="#" class="hover:text-slate-900">Ana Sayfa</a>
+          <a href="#" class="hover:text-slate-900">Kurumsal</a>
+          <a href="#" class="hover:text-slate-900">İletişim</a>
+          <button id="btn-login" class="ml-4 px-3 py-1 border rounded text-sm">Giriş</button>
+          <button id="btn-register" class="ml-2 px-3 py-1 bg-brand text-white rounded text-sm">Kayıt</button>
+          <button id="theme-toggle" aria-label="Toggle theme" class="ml-4 p-2 rounded border"><svg id="theme-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path></svg></button>
+        </nav>
+      </div>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4">
+      <!-- Hero -->
+      <section class="grid md:grid-cols-2 gap-8 items-center mb-12">
+        <div>
+          <h1 class="text-4xl font-extrabold leading-tight text-slate-900">Adresinizin Risk Puanını Saniyeler İçinde Öğrenin</h1>
+          <p class="mt-4 text-slate-600">Risko ile deprem, sel, yangın ve heyelan risklerini tek bir yerden analiz edin.</p>
+
+          <div class="mt-6">
+            <label class="sr-only">Adres</label>
+            <div class="flex gap-2">
+              <input id="address-input" class="w-full px-4 py-3 rounded-lg border border-slate-200 shadow-sm" placeholder="Örn: İstanbul, Beyoğlu, Galata" />
+              <button id="analyze-btn" class="px-5 py-3 rounded-lg bg-brand text-white font-medium shadow">Riski Sorgula</button>
+            </div>
+            <p class="mt-2 text-sm text-slate-500">Ücretsiz temel analiz: hızlı özet. Detaylı raporlar yakında.</p>
+          </div>
         <section id="anasayfa" class="grid md:grid-cols-2 gap-8 items-center">
           <div>
             <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900">Risko</h1>
