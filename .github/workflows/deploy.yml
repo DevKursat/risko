@@ -6,7 +6,7 @@ on:
       - main
 
 permissions:
-  contents: read
+  contents: write
   pages: write
 
 jobs:
@@ -20,15 +20,19 @@ jobs:
         run: |
           mkdir -p out
           if [ -d "frontend" ]; then
-            cp -R frontend/* out/
+            # copy all files preserving permissions and hidden files
+            cp -a frontend/. out/
           else
             cp index.html out/index.html
           fi
+          echo "Deploy folder contents:"
+          ls -la out || true
 
-      - name: Upload artifact for GitHub Pages
-        uses: actions/upload-pages-artifact@v1
+      - name: Deploy to gh-pages branch (via action)
+        uses: JamesIves/github-pages-deploy-action@v4
         with:
-          path: ./out
-
-      - name: Deploy to GitHub Pages
-        uses: actions/deploy-pages@v1
+          branch: gh-pages
+          folder: out
+          clean: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
